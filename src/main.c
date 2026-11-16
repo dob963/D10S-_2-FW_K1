@@ -50,12 +50,16 @@ int main(void)
         for (int i = 0; i < SPEC_BINS; ++i)
             spec_avg[i] = calib_apply_dc(spec_avg[i], i);
 
-        /* NOTA: spur_update() ha output int8_t ma ingresso fino a 255.
-         * La conversione interna attuale puo' andare in overflow oltre 127.
-         * Non viene alterato qui il modulo DSP fornito: serve concordare
-         * una rappresentazione comune (range 0..127 oppure API piu' ampia).
-         * Fino ad allora questo percorso non e' certificato per ampiezza piena.
+        /* Contratto numerico dell'uscita DSP/display: 0..127.
+         * spur_update() mantiene la sua API int8_t originale. Saturiamo
+         * l'ingresso a 127 nell'adattatore, evitando conversioni signed
+         * fuori intervallo e mantenendo coerenti spur threshold e stabilizer.
+         * Il valore AGC interno resta 0..255 fino a questo punto.
          */
+        for (int i = 0; i < SPEC_BINS; ++i) {
+            if (spec_avg[i] < 0) spec_avg[i] = 0;
+            if (spec_avg[i] > 127) spec_avg[i] = 127;
+        }
         spur_update(&spur, spec_avg, afc_raw, spec_clean);
         stabilizer_apply(&stab, spec_clean, spec_stable, SPEC_BINS);
 
