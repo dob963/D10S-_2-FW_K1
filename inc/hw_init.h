@@ -5,6 +5,7 @@
 /* Inizializzazione minima PY32F071 e bus 3-wire BK4829. */
 void hw_init(void);
 void delay_ms(uint32_t ms);
+void delay_us(uint32_t us);
 
 /* Transazioni raw BK4829: indirizzo 7 bit, dato 16 bit.
  * Il formato R/W e' implementato secondo il frame 3-wire del datasheet;
