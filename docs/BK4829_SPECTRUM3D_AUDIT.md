@@ -39,6 +39,15 @@ independent BK4829 datasheet/register specification or a test on the exact
 radio hardware revision. Register numbers and timing must be isolated behind
 a target-specific driver and verified before flash release.
 
+## Stato implementazione RF nel repository
+
+Nel driver indipendente `src/bk4829_drv.c` sono stati adattati, con commenti fonte:
+- sintonia tramite REG 0x38/0x39 e refresh di REG 0x30, usando frequenza in unità da 10 Hz, dal flusso Spectrum3D K1;
+- lettura RSSI grezza da REG 0x67 con maschera 0x01FF, come nel file upstream `App/driver/bk4829.c`;
+- attesa conservativa 1 ms e scarto della prima lettura RSSI dopo la risintonia.
+
+Non sono state importate sequenze di init o mappe complete. `bk4829_init()` conserva solo il controllo REG 0x30 in modo non distruttivo; la sequenza di init completa resta TODO. `bk4829_read_afc()` resta TODO perché il fork documenta il bit di abilitazione AFC in REG 0x73 ma non espone un getter affidabile del valore AFC. Il bus SPI e le letture devono ancora essere verificati sul dump stock/logic analyzer.
+
 ## Design decisions for D10S
 
 1. Keep the live trace as a direct per-bin representation of the current
@@ -88,7 +97,7 @@ upstream revision and modifications in the project's license inventory.
 - Exact app flash offset and container/update format must be verified against
   the installed UV-K1 bootloader 7.03.01 and the actual stock image.
 - BK4829 register semantics and timing need independent confirmation.
-- Il driver RF attuale resta uno stub: init, tuning, RSSI e AFC non sono implementati.
+- Il driver RF è parzialmente implementato da riferimenti K1: sintonia e RSSI hanno una sequenza sorgente; init completa e lettura AFC restano TODO.
 - Il repository possiede startup/linker e una build ARM di scaffold; le build precedenti hanno prodotto BIN raw sperimentali, non validati per il bootloader.
 - Non esiste ancora un pacchetto DFU verificato, né una prova di avvio sulla radio.
 - Nessun test RF o test display fisico è stato eseguito.
