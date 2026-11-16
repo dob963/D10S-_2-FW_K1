@@ -72,6 +72,7 @@ void bk4829_wait_settle(void)
      * una lettura REG_67 perché può riferirsi alla frequenza precedente.
      * Il datasheet BK4829 richiede tNXT >= 1 us dopo l'indirizzo.
      */
+    delay_ms(1u); /* margine conservativo rispetto al PLL <0,3 ms */
     uint8_t guard = 50u;
     while (guard-- && (bk_spi_read(BK_REG_GLITCH) & 0x00FFu) >= 200u)
         delay_us(1u);
