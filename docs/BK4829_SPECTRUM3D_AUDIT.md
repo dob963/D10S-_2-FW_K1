@@ -97,7 +97,7 @@ upstream revision and modifications in the project's license inventory.
 - Exact app flash offset and container/update format must be verified against
   the installed UV-K1 bootloader 7.03.01 and the actual stock image.
 - BK4829 register semantics and timing need independent confirmation.
-- Il driver RF è parzialmente implementato da riferimenti K1: sintonia e RSSI hanno una sequenza sorgente; init completa e lettura AFC restano TODO.
+- Il driver RF è parzialmente implementato da riferimenti K1: sintonia e RSSI hanno una sequenza sorgente; init completa e lettura AFC restano TODO. Come pista non verificata, `fagci/k1-scaner/src/driver/bk4829.c` righe 1330-1334 usa REG 0x6D signed e scala 5/6 Hz, ma il progetto dichiara compatibilità BK4829/BK4819 e usa la mappa `bk4819-regs.h`; non è sufficiente per abilitare la lettura AFC in D10S.
 - Il repository possiede startup/linker e una build ARM di scaffold; le build precedenti hanno prodotto BIN raw sperimentali, non validati per il bootloader.
 - Non esiste ancora un pacchetto DFU verificato, né una prova di avvio sulla radio.
 - Nessun test RF o test display fisico è stato eseguito.
