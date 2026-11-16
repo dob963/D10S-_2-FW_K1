@@ -1,7 +1,7 @@
 /*
  * Startup indipendente per PY32F071 / Cortex-M0+.
  * Tabella vettori e nomi IRQ verificati rispetto al startup pubblico Puya
- * PY32F071xx (repository Armel/F4HWN, revisione 3261ca7).
+ * PY32F071xx (repository ufficiale OpenPuya/PY32F071_Firmware, revisione 0ed2f4b).
  * Implementazione riscritta per questo progetto; nessun sorgente assembly
  * upstream è stato copiato.
  *
@@ -89,7 +89,7 @@ g_pfnVectors:
     .word PVD_IRQHandler
     .word RTC_IRQHandler
     .word FLASH_IRQHandler
-    .word RCC_IRQHandler
+    .word RCC_CTC_IRQHandler
     .word EXTI0_1_IRQHandler
     .word EXTI2_3_IRQHandler
     .word EXTI4_15_IRQHandler
@@ -132,7 +132,7 @@ WEAK_DEFAULT WWDG_IRQHandler
 WEAK_DEFAULT PVD_IRQHandler
 WEAK_DEFAULT RTC_IRQHandler
 WEAK_DEFAULT FLASH_IRQHandler
-WEAK_DEFAULT RCC_IRQHandler
+WEAK_DEFAULT RCC_CTC_IRQHandler
 WEAK_DEFAULT EXTI0_1_IRQHandler
 WEAK_DEFAULT EXTI2_3_IRQHandler
 WEAK_DEFAULT EXTI4_15_IRQHandler
