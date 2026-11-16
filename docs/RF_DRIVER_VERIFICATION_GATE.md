@@ -42,6 +42,14 @@ Prima di abilitare la scrittura RF:
 6. Mantenere il ricevitore in RX sicuro e non abilitare TX.
 7. Non dichiarare “massima sensibilità” senza misure RF ripetibili con generatore calibrato e livelli noti.
 
-## Stato
+## Stato aggiornato 2026-11-17
 
-Il target BK4829 e il pinout sono documentati da fonti specifiche. Il driver runtime resta non implementato e non verificato; questo è intenzionale per evitare scritture arbitrarie su registri RF.
+Il target BK4829 e il pinout sono documentati da fonti specifiche. È stato aggiunto un adattatore API `bk4829_drv.c/h` e il bus 3-wire PB8/PB9/PF9 è predisposto in `hw_init.c`.
+
+Il datasheet DS-BK4829-E01 V1.0 conferma frame R/W + A[6:0] + D[15:0], MSB-first, SCK massimo 8 MHz e settling PLL inferiore a 0,3 ms. Non pubblica però la mappa di registri e la formula di tuning necessarie per il funzionamento RF.
+
+Di conseguenza `bk4829_init()`, `bk4829_set_freq()`, `bk4829_read_rssi()` e `bk4829_read_afc()` restano TODO bloccanti. Nessuna scrittura RF viene effettuata. La polarità R/W e il turnaround del bus sono ancora da confermare con cattura logica sulla scheda UV-K1 V3.
+
+La calibrazione flash è in modalità fail-safe: offset zero, scrittura disabilitata. Non è stata selezionata alcuna pagina flash per evitare sovrapposizioni con bootloader, firmware e dati stock.
+
+Riferimento dettagliato: `docs/BK4829_DATASHEET_AUDIT.md`.
