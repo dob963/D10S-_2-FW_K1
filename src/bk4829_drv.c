@@ -39,8 +39,13 @@ void bk4829_init(void)
      * UV-K1 bootloader 7.03.01. Il datasheet pubblico non contiene la
      * tabella dei registri di configurazione.
      */
-    scan_ctrl = (uint16_t)(bk_spi_read(BK_REG_CTRL) & (uint16_t)~BK_CTRL_AF_DAC);
-    scan_ctrl_valid = 1u;
+    uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
+    if (raw_ctrl != 0xFFFFu) {
+        scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
+        scan_ctrl_valid = 1u;
+    } else {
+        scan_ctrl_valid = 0u; /* bus read non valido: non scrivere sul chip */
+    }
 }
 
 void bk4829_set_freq(uint32_t freq_hz)
@@ -52,7 +57,9 @@ void bk4829_set_freq(uint32_t freq_hz)
     uint32_t f10 = freq_hz / 10u;
 
     if (!scan_ctrl_valid) {
-        scan_ctrl = (uint16_t)(bk_spi_read(BK_REG_CTRL) & (uint16_t)~BK_CTRL_AF_DAC);
+        uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
+        if (raw_ctrl == 0xFFFFu) return;
+        scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
         scan_ctrl_valid = 1u;
     }
 
