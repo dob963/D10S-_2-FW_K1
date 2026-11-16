@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Host tests for BK4829 adapter
+        run: |
+          mkdir -p build
+          gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_bk4829_driver.c src/bk4829_drv.c -o build/test_bk4829_driver
+          ./build/test_bk4829_driver
       - name: Install ARM GCC
         run: |
           sudo apt-get update
