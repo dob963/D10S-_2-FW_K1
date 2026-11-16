@@ -7,6 +7,7 @@
 #include "stabilizer.h"
 #include "hw_init.h"
 #include "calib.h"
+#include "st7565.h"
 
 static int16_t spec_raw[SPEC_BINS], spec_avg[SPEC_BINS];
 static int16_t spec_med_in[SPEC_BINS], afc_raw[SPEC_BINS];
@@ -23,6 +24,7 @@ int main(void)
     spur_init(&spur);
     stabilizer_init(&stab);
     ui_spectrum_init();
+    ui_spectrum_set_info(146000000u, 4000000u, 0u);
 
     /* TODO: rendere start/stop configurabili dalla UI. */
     const uint32_t f_start = 144000000u;
@@ -68,6 +70,7 @@ int main(void)
          */
         ui_spectrum_draw(spec_stable, SPEC_BINS);
         waterfall_push(spec_stable, SPEC_BINS);
+        st7565_blit_full();
         if (ui_spectrum_poll_event()) ui_spectrum_handle();
     }
 }
