@@ -18,7 +18,8 @@ void calib_load(void)
 int16_t calib_apply_dc(int16_t v, int bin)
 {
     if (bin < 0 || bin >= SPEC_BINS) return v;
-    int16_t out = (int16_t)(v - dc_offset[bin]);
+    int32_t out = (int32_t)v - (int32_t)dc_offset[bin];
     if (out < 0) out = 0;
-    return out;
+    if (out > 32767) out = 32767;
+    return (int16_t)out;
 }
