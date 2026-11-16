@@ -1,55 +1,94 @@
 #include "bk4829_drv.h"
 #include "hw_init.h"
 
-/* Datasheet BK4829 DS-BK4829-E01 V1.0:
- * - interfaccia 3-wire: R/W + A[6:0] + D[15:0], MSB first;
- * - frequenza SCK massima 8 MHz;
- * - crystal nominale 26 MHz;
- * - PLL settle <0.3 ms.
+/* Driver adattato per BK4829 UV-K1 V3.
  *
- * ATTENZIONE: il datasheet pubblico consultato non espone una tabella
- * completa dei registri di controllo, ne' codifica RSSI/AFC, ne' la formula
- * di programmazione frac-N. Queste operazioni sono TODO bloccanti.
- * Non inserire valori presi da BK4819/UV-K5.
+ * Fonti K1 consultate (lettura, adattamento indipendente):
+ * - App/apps/spectrum3d/spectrum3d_app.c, righe 110-116 e 232-241:
+ *   REG_FREQ_LO=0x38, REG_FREQ_HI=0x39, REG_CTRL=0x30; frequenze
+ *   espresse in unità da 10 Hz; sequenza di retune 38/39/30.
+ * - App/apps/spectrum3d/spectrum3d_app.c, righe 255-265:
+ *   il primo campione RSSI dopo il cambio frequenza può essere vecchio.
+ * - App/driver/bk4829.c, righe 1550-1556:
+ *   RSSI letto da REG 0x67, maschera 0x01FF; glitch da REG 0x63.
+ * - App/driver/bk4829.c, righe 428-432:
+ *   conversione upstream dBm = (RSSI / 2) - 160.
+ *
+ * Attenzione: il fork mantiene simboli BK4819_* e include bk4819.h.
+ * Queste letture sono riferimenti specifici del firmware UV-K1 chiamato
+ * bk4829.c, non una mappa registri BK4829 indipendente. Non importare
+ * valori di init da BK4819 senza dump stock 7.03.01.
  */
+
+#define BK_REG_FREQ_LO 0x38u
+#define BK_REG_FREQ_HI 0x39u
+#define BK_REG_CTRL    0x30u
+#define BK_REG_RSSI    0x67u
+#define BK_CTRL_AF_DAC (1u << 9)
+
+static uint16_t scan_ctrl;
+static uint8_t scan_ctrl_valid;
 
 void bk4829_init(void)
 {
-    /* TODO BLOCCANTE:
-     * sequenza reset e inizializzazione RX ricavata da dump stock UV-K1 V3.
-     * Non effettuare scritture arbitrarie: rischio di mettere il chip in TX
-     * o alterare calibrazioni/configurazioni RF.
+    /* Inizializzazione non distruttiva: conserva REG_30 letto dal chip
+     * e mette in cache il profilo RX con AF DAC disabilitato.
+     *
+     * TODO BLOCCANTE: sequenza completa di reset/init RF da dump stock
+     * UV-K1 bootloader 7.03.01. Il datasheet pubblico non contiene la
+     * tabella dei registri di configurazione.
      */
+    scan_ctrl = (uint16_t)(bk_spi_read(BK_REG_CTRL) & (uint16_t)~BK_CTRL_AF_DAC);
+    scan_ctrl_valid = 1u;
 }
 
 void bk4829_set_freq(uint32_t freq_hz)
 {
-    (void)freq_hz;
-    /* TODO BLOCCANTE:
-     * formula frac-N, Ndiv e fIF da documentazione di programmazione BK4829
-     * o dump stock verificato. Non assumere un PLL formula BK4819.
+    /* Il driver Spectrum3D K1 usa frequenze in unità da 10 Hz:
+     * 6.25 kHz = 625. Fonte: App/apps/spectrum3d/spectrum3d_app.c,
+     * definizione CENTRE_STEP e funzione tune() (righe 84 e 232-241).
      */
+    uint32_t f10 = freq_hz / 10u;
+
+    if (!scan_ctrl_valid) {
+        scan_ctrl = (uint16_t)(bk_spi_read(BK_REG_CTRL) & (uint16_t)~BK_CTRL_AF_DAC);
+        scan_ctrl_valid = 1u;
+    }
+
+    /* Fonte K1 Spectrum3D: scrittura split 32 bit su 0x38/0x39,
+     * poi reset/restore di REG_30 per riavviare la sintonia PLL.
+     */
+    bk_spi_write(BK_REG_FREQ_LO, (uint16_t)f10);
+    bk_spi_write(BK_REG_FREQ_HI, (uint16_t)(f10 >> 16));
+    bk_spi_write(BK_REG_CTRL, 0u);
+    bk_spi_write(BK_REG_CTRL, scan_ctrl);
 }
 
 void bk4829_wait_settle(void)
 {
-    /* Datasheet: PLL settle <0.3 ms; 1 ms e' margine conservativo.
-     * Il timing effettivo dipende dal clock core configurato. */
+    /* Datasheet BK4829 DS-BK4829-E01 V1.0: PLL settle <0.3 ms.
+     * 1 ms è margine conservativo; il primo RSSI viene scartato perché
+     * Spectrum3D K1 segnala che può appartenere alla frequenza precedente.
+     */
     delay_ms(1u);
+    (void)bk_spi_read(BK_REG_RSSI);
 }
 
 int16_t bk4829_read_rssi(void)
 {
-    /* TODO BLOCCANTE: indirizzo registro, bitfield, segno e scala RSSI
-     * devono essere identificati su datasheet esteso o dump stock.
+    /* Fonte K1 App/driver/bk4829.c, righe 1550-1553:
+     * return ReadRegister(REG_67) & 0x01FF.
+     * Restituisce RSSI grezzo 9 bit, non dBm.
      */
-    return 0;
+    return (int16_t)(bk_spi_read(BK_REG_RSSI) & 0x01FFu);
 }
 
 int16_t bk4829_read_afc(void)
 {
-    /* TODO BLOCCANTE: indirizzo registro e codifica AFC non presenti
-     * nel datasheet pubblico DS-BK4829-E01 V1.0 consultato.
+    /* TODO BLOCCANTE: non è stato trovato nel fork K1 un getter del valore
+     * AFC. REG_73 bit 4 documenta solo enable/disable AFC, non la misura.
+     * Cercare nel dump stock 7.03.01 la lettura AFC e confrontarla con il
+     * datasheet BK4829 esteso / cattura SPI. Non usare valori BK4819 ipotetici.
      */
     return 0;
 }
