@@ -65,7 +65,8 @@ void ui_spectrum_draw(const int8_t *spec, int n)
     uint32_t rbw_k = rbw_hz / 1000u;
     if (rbw_k > 999u) rbw_k=999u;
     char rbwline[12]={'R','B','W',' ',0,0,0,'K','H','z',0,0};
-    put3(rbwline+4,rbw_k);
+    if (rbw_hz == 0u) { rbwline[4]='-'; rbwline[5]='-'; rbwline[6]='-'; }
+    else put3(rbwline+4,rbw_k);
     st7565_draw_text(0,8,rbwline);
 
     int max_bin = 0;
@@ -81,8 +82,8 @@ void ui_spectrum_draw(const int8_t *spec, int n)
         int x0 = (i * ST7565_WIDTH) / n;
         int x1 = ((i + 1) * ST7565_WIDTH) / n - 1;
         if (x1 < x0) x1=x0;
-        int h = (live * GRAPH_HEIGHT) / 255;
-        int ph = ((int)peak[i] * GRAPH_HEIGHT) / 255;
+        int h = (live * GRAPH_HEIGHT) / 127;
+        int ph = ((int)peak[i] * GRAPH_HEIGHT) / 127;
         int base = ST7565_HEIGHT - 1;
         int top = base - h + 1;
         int ptop = base - ph + 1;
@@ -100,7 +101,7 @@ void ui_spectrum_draw(const int8_t *spec, int n)
     /* Marcatore del massimo: piccolo triangolo sopra la barra. */
     if (max_val > 0) {
         int mx = (max_bin * ST7565_WIDTH) / n;
-        int mh = (max_val * GRAPH_HEIGHT) / 255;
+        int mh = (max_val * GRAPH_HEIGHT) / 127;
         int my = ST7565_HEIGHT - 1 - mh;
         if (my > GRAPH_TOP + 2) {
             st7565_set_pixel(mx,my-2,1);
