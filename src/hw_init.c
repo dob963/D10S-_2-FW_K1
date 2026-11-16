@@ -1,5 +1,6 @@
 #include "hw_init.h"
 #include "bk4829_drv.h"
+#include "st7565.h"
 #include <stdint.h>
 
 /* PY32F071: indirizzi dal Reference Manual Puya PY32F07X.
@@ -179,4 +180,5 @@ void hw_init(void)
     }
 
     bk4829_init();
+    st7565_init();
 }
