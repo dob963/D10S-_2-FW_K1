@@ -87,3 +87,20 @@ upstream revision and modifications in the project's license inventory.
   host test report or radio test has yet been produced.
 
 No flashable firmware is claimed by this audit.
+
+## Sweep-path detail (full source inspection)
+
+The complete `sweep()` body also shows:
+
+- A rising candidate is measured again after the configured signal settle delay.
+- The receiver is parked back at the first sweep frequency after the sweep.
+- The upstream history accumulator stores the maximum measured value per bin
+  across sweeps before committing a history row. This is a peak-history
+  mechanism, not a raw current-sweep live trace. D10S must not use that
+  accumulator as its live trace: each live bin must be assigned from the
+  current sweep's accepted sample/confirmation result, while peak hold remains
+  in a separate buffer.
+- A sweep interrupted by user input/window movement is discarded rather than
+  treated as a complete spectrum.
+
+These distinctions are important to preserve the no-cascade requirement.
