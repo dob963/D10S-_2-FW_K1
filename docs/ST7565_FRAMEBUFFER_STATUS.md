@@ -10,8 +10,8 @@
 - Waterfall separato: 16 righe, 128 colonne, 16 livelli da campioni DSP 0..127, matrice Bayer 4x4.
 - La schermata usa 16 righe intestazione, 16 righe waterfall e 32 righe traccia live.
 - Frequenza centrale e span sono visualizzati in MHz; RBW è visualizzata in kHz. RBW zero è indicata come sconosciuta (---).
-- Trasporto display bit-bang SPI mode 0 su PA5 (SCK), PA7 (MOSI), PA6 (A0), PB2 (CS), 8 pagine x 128 byte.
-- Sequenza di init standard ST7565: reset software E2, display off/on, bias, ADC, COM scan, start line, resistor ratio, power control, contrasto, normal display.
+- Trasporto display bit-bang SPI mode 3 (CPOL=HIGH, CPHA=2EDGE) su PA5 (SCK), PA7 (MOSI), PA6 (A0), PB2 (CS), 8 pagine x 128 byte. Ogni pagina usa offset colonna +4.
+- Sequenza di init ST7565: reset software E2, display off/on, bias 1/9, COM normale, SEG invertito, start line, resistor ratio 5.0, contrasto iniziale 31/63, power control con stadi e tempi di attesa. Parametri ricavati come riferimento dal driver upstream `App/driver/st7565.c` (Apache-2.0), reimplementati autonomamente.
 - hw_init configura GPIO e chiama st7565_init; il main esegue il blit dopo aver composto waterfall e traccia.
 
 ## Pin e bus
@@ -21,8 +21,8 @@ Il sorgente hardware configura il bus RF su PB8 (clock), PB9 (SDIO bidirezionale
 ## Limiti hardware ancora aperti
 
 1. Il reset implementato è software ST7565 (comando E2). Il pin RESET fisico del modulo non è stato identificato e non viene pilotato.
-2. Bias 1/9, COM scan C8, resistor ratio 0x24 e contrasto 0x18 sono valori iniziali generici. Orientamento, contrasto e offset colonna/pagina devono essere confermati sul pannello reale.
-3. Non è stata eseguita una cattura logica del bus sul display; modalità, polarità, timing e risposta del pannello devono essere misurati.
+2. Bias 1/9, COM normale, SEG invertito, resistor ratio 5.0 e contrasto 31/63 seguono la configurazione software upstream K1; contrasto e orientamento vanno comunque verificati sul pannello della specifica revisione PCB.
+3. SPI mode 3 e offset colonna +4 sono riferimenti del driver upstream K1; non è stata eseguita una cattura logica sul dispositivo specifico, quindi timing e risposta del pannello devono essere misurati.
 4. Non è stata eseguita prova fisica sul dispositivo: il driver è compilato ma non ancora dichiarato validato elettricamente.
 
 ## Memoria
