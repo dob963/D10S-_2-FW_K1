@@ -71,16 +71,6 @@ static void rf_sdio_input(void)
     GPIO_PUPDR(GPIOB_BASE) &= ~(3u << (RF_SDIO_PIN * 2u));
 }
 
-static void rf_clock_pulse(void)
-{
-    pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
-    __asm volatile ("nop");
-    __asm volatile ("nop");
-    pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
-    __asm volatile ("nop");
-    __asm volatile ("nop");
-}
-
 static void rf_send_bit(uint32_t bit)
 {
     pin_write(GPIOB_BASE, RF_SDIO_PIN, bit);
