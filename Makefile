@@ -10,7 +10,7 @@ CPUFLAGS := -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft
 CFLAGS := $(CPUFLAGS) -std=c11 -Os -ffunction-sections -fdata-sections \
           -Wall -Wextra -Wno-unused-parameter -Iinc
 ASFLAGS := $(CPUFLAGS) -x assembler-with-cpp
-LDFLAGS := $(CPUFLAGS) -Tld/py32f071_app.ld -Wl,--gc-sections \
+LDFLAGS := $(CPUFLAGS) -nostartfiles -Tld/py32f071_app.ld -Wl,--gc-sections \
            -Wl,-Map=build/spectrum_k1_v3.map -Wl,--print-memory-usage \
            --specs=nano.specs --specs=nosys.specs
 LDLIBS := -lc -lgcc -lnosys
