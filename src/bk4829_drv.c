@@ -99,10 +99,13 @@ int16_t bk4829_read_rssi(void)
 
 int16_t bk4829_read_afc(void)
 {
-    /* TODO BLOCCANTE: non è stato trovato nel fork K1 un getter del valore
-     * AFC. REG_73 bit 4 documenta solo enable/disable AFC, non la misura.
-     * Cercare nel dump stock 7.03.01 la lettura AFC e confrontarla con il
-     * datasheet BK4829 esteso / cattura SPI. Non usare valori BK4819 ipotetici.
+    /* TODO BLOCCANTE: candidato community non verificato:
+     * fagci/k1-scaner, src/driver/bk4829.c righe 1330-1334 legge REG 0x6D
+     * come int16_t e applica 5/6 Hz per unità. Il progetto dichiara
+     * compatibilità BK4829/BK4819 e mantiene simboli BK4819_*: non è prova
+     * indipendente della codifica sul BK4829 del nostro UV-K1 V3.
+     * REG_73 è controllo/abilitazione AFC, non il valore misurato.
+     * Verificare 0x6D, segno e scala sul dump stock 7.03.01 prima dell'uso.
      */
     return 0;
 }
