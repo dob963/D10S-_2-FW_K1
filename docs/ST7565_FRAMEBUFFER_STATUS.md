@@ -31,7 +31,7 @@ Il solo framebuffer occupa 1.024 byte. Il buffer waterfall occupa altri 2.048 by
 
 ## Frequenza aggiornamento
 
-Il display riceve un frame completo di 1.024 byte per iterazione. Non è stato aggiunto un limitatore software a 10-15 fps; il rate dipende dallo sweep e dal tempo reale di trasferimento. Va misurato sul dispositivo, evitando di dichiarare 10-15 fps senza prova.
+Il display riceve un frame completo di 1.024 byte per iterazione. Il main inserisce una pausa minima di 67 ms dopo ogni blit, per limitare il refresh a circa 10-15 fps assumendo il clock core di riferimento a 8 MHz. Il clock effettivo non è ancora misurato sul dispositivo: il limite temporale va verificato con oscilloscopio/logic analyzer sulla radio reale.
 
 ## Scala e fedeltà live
 
