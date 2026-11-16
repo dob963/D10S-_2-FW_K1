@@ -34,7 +34,7 @@ void waterfall_push(const int8_t *spec, int n)
     for (int i=0;i<n;++i) {
         int v=spec[i]<0 ? 0 : spec[i];
         if (v>255) v=255;
-        wf[0][i]=(uint8_t)(v >> 4);
+        wf[0][i]=(uint8_t)(v >> 3);
     }
 
     /* Render separato: 16 righe in alto, nessun effetto sulla traccia live.
