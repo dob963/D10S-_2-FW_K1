@@ -44,9 +44,9 @@ a target-specific driver and verified before flash release.
 Nel driver indipendente `src/bk4829_drv.c` sono stati adattati, con commenti fonte:
 - sintonia tramite REG 0x38/0x39 e refresh di REG 0x30, usando frequenza in unità da 10 Hz, dal flusso Spectrum3D K1;
 - lettura RSSI grezza da REG 0x67 con maschera 0x01FF, come nel file upstream `App/driver/bk4829.c`;
-- attesa conservativa 1 ms e scarto della prima lettura RSSI dopo la risintonia.
+- attesa PLL limitata tramite REG 0x63 (soglia 200, massimo 50 letture) e scarto della prima lettura RSSI dopo la risintonia; il turnaround 3-wire è stato ridotto al minimo documentato tNXT=1 us dal datasheet.
 
-Non sono state importate sequenze di init o mappe complete. `bk4829_init()` conserva solo il controllo REG 0x30 in modo non distruttivo; la sequenza di init completa resta TODO. `bk4829_read_afc()` resta TODO perché il fork documenta il bit di abilitazione AFC in REG 0x73 ma non espone un getter affidabile del valore AFC. Il bus SPI e le letture devono ancora essere verificati sul dump stock/logic analyzer.
+Non sono state importate sequenze di init o mappe complete. `bk4829_init()` conserva solo il controllo REG 0x30 in modo non distruttivo; la sequenza di init completa resta TODO. `bk4829_read_afc()` resta TODO perché il fork documenta il bit di abilitazione AFC in REG 0x73 ma non espone un getter affidabile del valore AFC. Il bus SPI usa ora il turnaround minimo tNXT=1 us indicato dal datasheet BK4829; clock effettivo e forme d'onda devono ancora essere verificati con logic analyzer e confronto dump stock.
 
 ## Design decisions for D10S
 
