@@ -2,40 +2,82 @@
 
 Date: 2026-11-16
 
-This document records observations from public source repositories. It is a research record, not proof that every UV-K1 board revision has identical components.
+Ricerca basata su repository pubblici. La mappa descrive la piattaforma di riferimento UV-K1 standard/V3; non sostituisce la verifica elettrica su una specifica revisione PCB.
 
-## Public technical references inspected
+## Fonti consultate
 
-1. Armel UV-K1/K5 V3 firmware custom port
-   - URL: https://github.com/armel/uv-k1-k5v3-firmware-custom
-   - Branch inspected: main
-   - Relevant paths: `App/board.c`, `App/driver/bk4829.c`, `App/driver/bk4819.h`, `App/driver/st7565.c`, `App/driver/st7565.h`, `Core/py32f071xb.ld`, `Core/startup_py32f071xx.s`, `App/app/spectrum.c`, `App/CMakeLists.txt`
-   - Repository declares Apache-2.0 licensing. Preserve the license and attribution if any source is reused; this project currently records it as a reference only.
-2. GOGUFW UV-K1 Messenger
-   - URL: https://github.com/Gogu-Qs/GOGUFW-UV-K1-Messenger
-   - Branch inspected: main
-   - Used as a second implementation reference only. No source copied.
+1. Armel/F4HWN UV-K1/K5 V3:
+   https://github.com/armel/uv-k1-k5v3-firmware-custom
+   File consultati: `App/board.c`, `App/driver/bk4829.c`, `App/driver/st7565.c`, `App/driver/keyboard.c`, `Core/py32f071xb.ld`.
+   Licenza repository: Apache-2.0. I file upstream riportano avvisi e attribuzioni dei rispettivi autori.
+2. Quansheng toolkit:
+   https://github.com/knoinok/quansheng_toolkit
+   README e manifest firmware: UV-K1 standard PY32F071; combinazione UV-K1 + bootloader 7.03.01 + F4HWN Fusion 5.4 indicata come validata.
+3. Teardown UV-K1:
+   https://github.com/armel/k1-teardown
+   Include datasheet BK4829 e PY32F071.
+4. Atlante V3/K1:
+   https://github.com/Brico-Hams/Radio-Web-install/blob/main/docs/ATLAS-UV-K5-V3.md
+   Corrobora la mappa di pin firmware e la famiglia di scheda.
 
-## Findings and cautions
+## Mappa hardware di riferimento
 
-- The Armel project contains a PY32F071 device linker script and startup assembly, plus board initialization and ST7565 display driver paths. These are useful evidence for the MCU family and LCD software interface.
-- Its board GPIO initialization configures LCD A0 on PA6, LCD CS on PB2, RF serial clock/data on PB8/PB9, and RF chip select on PF9. These pin assignments are specific to the inspected source revision and must not be assumed for a different PCB revision without corroboration.
-- The same source tree contains a file named `bk4829.c`, but its visible API and comments still use BK4819 identifiers. A filename alone is not proof of the physical RF IC model or register compatibility.
-- The board source labels the RF serial pins and CS as BK4819. This conflicts with informal descriptions calling the V3 RF front end BK4829. Treat the exact transceiver identity and register map as UNCONFIRMED until verified from the board schematic, BOM, chip marking, or reliable hardware-specific documentation.
-- The LCD source path is ST7565. Confirm the exact LCD glass/controller variant and wiring for the user's radio before relying on initialization timing or offsets.
-- The inspected Spectrum source is under Apache-2.0 and includes Fagci attribution. It is a technical reference only; this project must not copy it without preserving license and notices and making an explicit reuse decision.
+### Display
 
-## Consequences for this project
+Il driver upstream è `App/driver/st7565.c`: controller software ST7565, LCD monocromatico 128x64.
+- PA5: SPI1 SCK
+- PA7: SPI1 SDA/MOSI
+- PA6: A0 dato/comando
+- PB2: CS
 
-1. Do not write or enable RF register sequences based only on a guessed BK4819/BK4829 identity.
-2. Build the Spectrum processing and display-independent tests separately from the hardware driver.
-3. Keep the live trace independent from Peak Hold and Waterfall. No cascade, trail, lateral smearing, or feedback from display history into the live signal.
-4. Do not produce a flashable BIN until MCU, memory map, bootloader offset, RF chip, LCD controller, pinout, and startup sequence are verified for the exact target.
-5. Preserve source provenance, revisions, licenses, and modifications in this directory before any third-party code is reused.
+Il driver usa SPI1 hardware, CPOL HIGH, CPHA 2EDGE, MSB first, prescaler /64. Non configurare PA5–PA7 come bus radio.
 
-## Current release blockers
+### RF
 
-- No firmware source tree has yet been added to this repository; it currently contains the README and project specification.
-- The exact radio board revision and RF chip identity are not confirmed by the repository itself.
-- The bootloader application start address and protected calibration/data regions have not yet been independently established for the exact unit.
-- No cross-compilation or hardware test has been performed for this repository.
+Il target V3/K1 viene identificato dalle fonti di teardown e dal driver upstream come piattaforma BK4829. Il file `App/driver/bk4829.c` implementa però un'interfaccia legacy con simboli `BK4819_*`, e `board.c` conserva commenti “BK4819”. Questi nomi legacy non devono essere interpretati come prova che il componente fisico sia BK4819: il teardown pubblica il datasheet BK4829 per il K1.
+
+Bus RF nel driver upstream:
+- PF9: CSN
+- PB8: SCL
+- PB9: SDA bidirezionale
+
+**Decisione:** il target RF di questo progetto resta BK4829; la denominazione legacy BK4819 va isolata dietro l'adapter. Non copiare una tabella registri BK4819 o inventare una sequenza init/tuning: prima di abilitare scritture RF va verificata la compatibilità dei registri usati con il datasheet BK4829 e con il percorso di inizializzazione V3. La formula di tuning deve essere derivata dalla specifica XTAL e dall'unità di frequenza attesa, non dedotta da un helper per toni.
+
+### Tastiera e GPIO
+
+Da `App/board.c` e `App/driver/keyboard.c`:
+- Colonne matrice: PB3, PB4, PB5, PB6
+- Righe matrice: PB12, PB13, PB14, PB15
+- PTT: PB10
+- Backlight: PF8
+- Clock GPIO abilitati upstream: GPIOA, GPIOB, GPIOC, GPIOF
+
+Fn1/Fn2/F-lock non risultano tre ingressi GPIO separati: i tasti sono codificati dalla matrice e dalla logica tastiera upstream.
+
+## Flash e bootloader
+
+Il linker upstream `Core/py32f071xb.ld` dichiara:
+- FLASH applicazione: `0x08002800`, lunghezza 118 KiB
+- RAM: `0x20000000`, lunghezza 16 KiB
+
+Il toolkit elenca UV-K1 standard con bootloader 7.03.01 e F4HWN Fusion 5.4 come combinazione validata. Il progetto usa quindi `0x08002800` come layout di riferimento K1, documentato anche in `ld/py32f071_app.ld`.
+
+L'origine linker non prova da sola che un'immagine raw arbitraria sia flashabile: occorre rispettare vettori, formato raw/DFU, handshake, dimensioni e regioni riservate. La calibrazione non deve essere salvata in un settore flash scelto arbitrariamente.
+
+## Implicazioni per l'integrazione
+
+1. Display e keypad: adottare la mappa V3/K1 qui riportata.
+2. RF: usare il bus PB8/PB9/PF9 e mantenere target BK4829; isolare i nomi legacy BK4819.
+3. Clock/delay: non assumere 8 MHz. Il firmware upstream K1 usa un handoff clock configurato dal bootloader; il valore e la sorgente devono essere coerenti con il target e verificati nel runtime.
+4. Non implementare pin RF PA4–PA7: sono in conflitto con la mappa LCD.
+5. Tenere live trace, Peak Hold e Waterfall indipendenti.
+6. Registrare licenze, copyright, NOTICE, revisioni e modifiche prima di riutilizzare codice terzo.
+
+## Stato attuale
+
+- Creato linker script di riferimento in `ld/py32f071_app.ld`.
+- Creato documento di verifica pinout in `docs/UPSTREAM_PINOUT_VERIFICATION.md`.
+- I moduli DSP incollati nella conversazione non sono ancora file presenti nella repository.
+- Non sono ancora presenti driver runtime, startup completo, build system o immagine BIN.
+- Nessuna compilazione ARM e nessun test radio sono stati eseguiti.
+- Driver RF e calibrazione flash restano bloccati finché non sono verificate le sequenze BK4829 e le aree dati riservate.
