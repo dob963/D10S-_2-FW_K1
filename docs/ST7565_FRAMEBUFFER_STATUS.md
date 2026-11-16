@@ -20,7 +20,7 @@ Il sorgente hardware configura il bus RF su PB8 (clock), PB9 (SDIO bidirezionale
 
 ## Limiti hardware ancora aperti
 
-1. Il reset implementato è software ST7565 (comando E2). Il pin RESET fisico del modulo non è stato identificato e non viene pilotato.
+1. Il reset implementato è software ST7565 (comando E2). Il driver upstream K1 dichiara che non è disponibile un reset hardware utilizzabile sulla radio; la funzione HardwareReset è infatti un no-op. Il firmware non pilota un pin RESET fisico.
 2. Bias 1/9, COM normale, SEG invertito, resistor ratio 5.0 e contrasto 31/63 seguono la configurazione software upstream K1; contrasto e orientamento vanno comunque verificati sul pannello della specifica revisione PCB.
 3. SPI mode 3 e offset colonna +4 sono riferimenti del driver upstream K1; non è stata eseguita una cattura logica sul dispositivo specifico, quindi timing e risposta del pannello devono essere misurati.
 4. Non è stata eseguita prova fisica sul dispositivo: il driver è compilato ma non ancora dichiarato validato elettricamente.
