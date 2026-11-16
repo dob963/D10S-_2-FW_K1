@@ -7,8 +7,8 @@
 #define ST7565_HEIGHT 64
 #define ST7565_FB_SIZE 1024
 
-/* API framebuffer. Il trasporto fisico resta separato e va abilitato
- * solo dopo la verifica del reset e della condivisione dei pin sulla V3.
+/* Framebuffer 128x64 e trasporto bit-bang ST7565 dedicato.
+ * Il reset software e' usato; nessun reset hardware viene pilotato.
  */
 void st7565_init(void);
 void st7565_clear(void);
