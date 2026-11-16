@@ -54,6 +54,12 @@ void bk4829_set_freq(uint32_t freq_hz)
      * 6.25 kHz = 625. Fonte: App/apps/spectrum3d/spectrum3d_app.c,
      * definizione CENTRE_STEP e funzione tune() (righe 84 e 232-241).
      */
+    /* Limiti RX dichiarati dal datasheet BK4829 DS-BK4829-E01 V1.0:
+     * 18-580 MHz e 760-1160 MHz. Fuori banda non inviare scritture PLL.
+     */
+    if (!((freq_hz >= 18000000u && freq_hz <= 580000000u) ||
+          (freq_hz >= 760000000u && freq_hz <= 1160000000u))) return;
+
     uint32_t f10 = freq_hz / 10u;
 
     if (!scan_ctrl_valid) {
