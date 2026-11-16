@@ -3,61 +3,68 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Workflow run: [43976416935](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43976416935)  
-Commit sorgente del workflow: `05060e65850067faa48e1f31068c587635f5e08c`
+Workflow: [43982994745](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43982994745)  
+Commit del workflow: `c73733dbb58cb333108c447fcded1722d47d83b0`  
+Codice ST7565 incluso: `5f85afa06f545d58175d578d9e4744d0fd7cedcc`
 
-## Esito della compilazione
+## Esito compilazione
 
-GitHub Actions ha completato con esito `success` i passaggi di installazione toolchain, compilazione, linking, generazione BIN e caricamento artefatti.
+GitHub Actions ha completato con esito `success` installazione toolchain, compilazione, linking, generazione BIN raw e caricamento artefatti.
 
-Configurazione osservata:
+Configurazione:
 - `arm-none-eabi-gcc`
 - `-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft`
 - `-std=c11 -Os`
-- linker script `ld/py32f071_app.ld`
+- linker `ld/py32f071_app.ld`
 - output ELF, BIN raw e MAP
 
 Metriche riportate dal linker:
-- FLASH: 2.280 byte su 96 KiB (2,32%)
-- RAM: 4.508 byte su 16 KiB (27,51%)
-- ELF: text 2.280, data 0, bss 4.508 byte
-- BIN raw: 2.280 byte
+- FLASH: 5.024 byte su 96 KiB (5,11%)
+- RAM `.data + .bss`: 5.804 byte su 16 KiB (35,42%)
+- `text`: 5.020 byte
+- `data`: 4 byte
+- `bss`: 5.800 byte
+- stack riservato dal linker: 1.536 byte
+- RAM residua dopo `.data/.bss` e riserva stack: 9.044 byte
+- BIN raw: 5.024 byte
 
 Artefatto GitHub Actions:
 - Nome: `uv-k1-v3-spectrum-build`
-- ID: `14279979490`
-- SHA-256 ZIP: `70af8fe7a61c16a167d1767bee36a4aa6534ca5dd02e64e9af9ec785419470e2`
+- ID: `14285100231`
+- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43982994745/artifacts/14285100231)
 
-## Avvertenza fondamentale
+## Warning
 
-Questa è una verifica di compilazione e linking, NON una verifica funzionale sulla radio. Il BIN generato è uno scaffold minimale e NON deve essere flashato sul dispositivo.
+Nessun warning del compilatore C è stato riportato nella build. È stato rimosso il precedente warning `-Wmisleading-indentation` in `src/agc_sw.c` separando due istruzioni `if` su righe distinte, senza modificare la logica AGC.
 
-Il log stesso segnala che driver BK4829 e rendering ST7565 non sono completi/verificati. Il driver RF corrente non esegue sintonia né lettura RSSI/AFC reali; le funzioni di bus RF sono stub. La UI non disegna ancora lo spettro sul display.
+## Funzioni incluse nella build
 
-## Warning di compilazione
+- Moduli DSP e stabilizzatore integrati; l'adattatore d'uscita mantiene il dominio 0..127 richiesto dall'interfaccia `int8_t` della reiezione spurie.
+- Framebuffer ST7565 128x64 da 1.024 byte, font 5x7, rendering live, Peak Hold separato e Waterfall 16 livelli con dithering 4x4.
+- Trasporto display bit-bang SPI mode 3, pin PA5/PA6/PA7/PB2, offset colonna +4, sequenza ST7565 derivata come riferimento dal driver upstream K1 e reimplementata autonomamente.
+- `hw_init()` inizializza GPIO e richiama `st7565_init()`.
 
-È presente un warning `-Wmisleading-indentation` in `src/agc_sw.c` sulla riga con due istruzioni `if` sulla stessa riga. Non blocca la build e il modulo DSP è stato lasciato invariato come richiesto.
+## Limiti funzionali: non è un firmware pronto per la radio
 
-## Verifiche statiche sull'immagine
+La build prova la compilabilità, non il funzionamento fisico. In particolare:
+- Il trasporto ST7565 è compilato, ma non è stato testato sul display reale; contrasto, orientamento e tempi richiedono verifica sulla specifica revisione PCB.
+- Il driver BK4829 non è completo: `bk4829_init()`, tuning, RSSI e AFC restano stub. Il bus 3-wire è predisposto, ma non validato con logic analyzer o confronto stock.
+- `sweep_adaptive()` non può ancora produrre misure RF reali perché il driver restituisce valori stub.
+- `calib_load()` inizializza ancora offset a zero; lettura/scrittura flash della calibrazione non implementate.
+- L'immagine prodotta è un BIN ARM raw, non un pacchetto DFU Quansheng verificato.
+- Nessun test di avvio, ricezione, display o RF è stato eseguito sulla radio.
 
-L'immagine BIN scaricata è riconosciuta come ARM Cortex-M firmware. La tabella vettori indica:
-- stack iniziale: `0x20004000` (fine dei 16 KiB SRAM)
-- reset handler: `0x08003098`
+## Gate prima del flash
 
-Il reset handler è coerente con un'immagine linkata a partire dall'offset configurato nel linker, ma ciò NON dimostra che l'offset sia quello corretto per il bootloader installato né che il contenitore DFU sia compatibile.
-
-## Gate ancora aperti prima di qualsiasi test RF/flash
-
-1. Ottenere dump completo e verificato del firmware stock UV-K1 V3 e preservare la calibrazione.
-2. Confermare offset applicazione e layout bootloader 7.03.01 con strumenti e immagine stock reali.
-3. Acquisire protocollo e registri BK4829: dump stock, cattura logic analyzer o documentazione tecnica attendibile. Non usare registri BK4819.
-4. Implementare e verificare bus BK4829, sintonia, RSSI e AFC.
-5. Implementare il renderer ST7565 sul pinout K1 V3 verificato.
-6. Verificare tabella vettori PY32F071, clock, GPIO e tempi sul dispositivo.
-7. Correggere l'adattamento dei dati DSP senza riscrivere gli algoritmi forniti; in particolare verificare la conversione `int16_t` verso `int8_t` nel rejection stage.
-8. Aggiungere test host per sweep, coerenza spurie, saturazioni, stabilizzatore e assenza di cascata.
-9. Generare e validare il formato di aggiornamento Quansheng appropriato; il BIN raw non equivale a un DFU flashabile.
+1. Ottenere e conservare il dump stock completo UV-K1 bootloader 7.03.01, inclusa la calibrazione.
+2. Verificare formato di aggiornamento, offset e tabella vettori rispetto al bootloader installato. `0x08002800` è il riferimento upstream del progetto, non autorizza da solo il flash di un raw BIN.
+3. Confermare la revisione PCB e i pin reali; il riferimento software K1 usa RF PB8/PB9/PF9 e LCD PA5/PA6/PA7/PB2.
+4. Verificare la sequenza di tuning/RSSI/AFC BK4829 tramite dump stock o misura controllata. Non assumere equivalenza BK4819 e non scrivere registri non verificati.
+5. Testare il rendering ST7565 sul pannello reale e misurare il rate di aggiornamento.
+6. Definire un'area calibrazione sicura e non sovrapposta a bootloader, applicazione o dati radio prima di implementare flash write.
+7. Aggiungere test host DSP/sweep e prove hardware di sensibilità, spurie, no-cascade e assenza di deformazione della traccia live.
+8. Validare il contenitore/DFU con il tool appropriato e mantenere il backup stock per il ripristino.
 
 ## Regola di rilascio
 
-Nessun file va etichettato come firmware flashabile finché tutti i gate hardware, bootloader, RF e display non sono superati e il backup stock non è disponibile.
+Il BIN da 5.024 byte è un artefatto di compilazione sperimentale e NON deve essere flashato sulla radio. Nessun file sarà etichettato come flashabile finché tutti i gate hardware, RF, display e bootloader non saranno superati.
