@@ -24,6 +24,7 @@
 #define BK_REG_FREQ_HI 0x39u
 #define BK_REG_CTRL    0x30u
 #define BK_REG_RSSI    0x67u
+#define BK_REG_GLITCH  0x63u
 #define BK_CTRL_AF_DAC (1u << 9)
 
 static uint16_t scan_ctrl;
@@ -66,11 +67,14 @@ void bk4829_set_freq(uint32_t freq_hz)
 
 void bk4829_wait_settle(void)
 {
-    /* Datasheet BK4829 DS-BK4829-E01 V1.0: PLL settle <0.3 ms.
-     * 1 ms è margine conservativo; il primo RSSI viene scartato perché
-     * Spectrum3D K1 segnala che può appartenere alla frequenza precedente.
+    /* Fonte K1 Spectrum3D, App/apps/spectrum3d/spectrum3d_app.c:
+     * attende REG_63 (low byte) < 200, massimo 50 letture, poi scarta
+     * una lettura REG_67 perché può riferirsi alla frequenza precedente.
+     * Il datasheet BK4829 richiede tNXT >= 1 us dopo l'indirizzo.
      */
-    delay_ms(1u);
+    uint8_t guard = 50u;
+    while (guard-- && (bk_spi_read(BK_REG_GLITCH) & 0x00FFu) >= 200u)
+        delay_us(1u);
     (void)bk_spi_read(BK_REG_RSSI);
 }
 
