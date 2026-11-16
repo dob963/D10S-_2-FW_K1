@@ -92,6 +92,22 @@ static uint32_t rf_read_bit(void)
     return bit;
 }
 
+void delay_us(uint32_t us)
+{
+    /* SysTick con clock core di riferimento 8 MHz. Il valore deve essere
+     * riallineato se la configurazione clock effettiva viene modificata. */
+    const uint32_t ticks_per_us = HW_CORE_CLOCK_HZ / 1000000u;
+    if (ticks_per_us == 0u || ticks_per_us > 0x01000000u) return;
+    SYST_CSR = 0u;
+    SYST_RVR = ticks_per_us - 1u;
+    while (us--) {
+        SYST_CVR = 0u;
+        SYST_CSR = SYST_CSR_CLKSOURCE | SYST_CSR_ENABLE;
+        while ((SYST_CSR & SYST_CSR_COUNTFLAG) == 0u) { }
+        SYST_CSR = 0u;
+    }
+}
+
 void delay_ms(uint32_t ms)
 {
     /* SysTick con clock core: nessun loop calibrato a numero di NOP.
@@ -136,7 +152,7 @@ uint16_t bk_spi_read(uint8_t reg)
     rf_sdio_input();
     /* Turnaround del bus: il datasheet mostra il passaggio MCU->BK4829
      * dopo l'indirizzo; tNXT minimo 1 us. */
-    delay_ms(1u); /* TODO sostituire con delay sub-microsecondo misurato */
+    delay_us(1u); /* BK4829 datasheet: tNXT minimo 1 us */
     for (bit = 15; bit >= 0; --bit)
         value = (uint16_t)((value << 1) | rf_read_bit());
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
