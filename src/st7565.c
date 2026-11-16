@@ -1,4 +1,41 @@
 #include "st7565.h"
+#include <stdint.h>
+
+/* Bus display dedicato: PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS.
+ * Il bus RF resta su PB8/PB9/PF9 (hw_init.c): i pin non coincidono.
+ * RESET hardware del modulo LCD non identificato: usare il reset software
+ * ST7565 E2; verificare il reset fisico sullo schema/PCB prima del test.
+ */
+#define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
+#define LCD_SCK 5u
+#define LCD_A0 6u
+#define LCD_MOSI 7u
+#define LCD_CS 2u
+extern void delay_ms(uint32_t ms);
+
+static void lcd_pin(uint32_t bsrr, uint32_t pin, int high)
+{
+    REG32(bsrr) = high ? (1u << pin) : (1u << (pin + 16u));
+}
+
+static void lcd_send_byte(uint8_t value)
+{
+    for (int bit = 7; bit >= 0; --bit) {
+        lcd_pin(0x50000018u, LCD_MOSI, (value >> bit) & 1u);
+        __asm volatile ("nop");
+        lcd_pin(0x50000018u, LCD_SCK, 1);
+        __asm volatile ("nop");
+        lcd_pin(0x50000018u, LCD_SCK, 0);
+    }
+}
+
+static void lcd_command(uint8_t value)
+{
+    lcd_pin(0x50000418u, LCD_CS, 0);
+    lcd_pin(0x50000018u, LCD_A0, 0);
+    lcd_send_byte(value);
+    lcd_pin(0x50000418u, LCD_CS, 1);
+}
 
 /* 1 KB di framebuffer: 8 pagine x 128 colonne, formato ST7565. */
 static uint8_t fb[ST7565_FB_SIZE];
@@ -32,10 +69,29 @@ static const uint8_t font_alpha[26][5] = {
 void st7565_init(void)
 {
     st7565_clear();
-    /* TODO HW: reset hardware e sequenza comandi ST7565.
-     * Non inviare comandi finche' reset, polarita' e timing non sono
-     * verificati sullo schema/PCB UV-K1 V3.
+    /* Sequenza standard ST7565: reset software, display off, bias,
+     * ADC/COM scan, power control, rapporto resistivo e contrasto.
+     * Bias, orientamento e contrasto sono valori iniziali da verificare
+     * sul pannello reale; non sono registri BK4829.
      */
+    lcd_pin(0x50000418u, LCD_CS, 1);
+    lcd_pin(0x50000018u, LCD_SCK, 0);
+    lcd_pin(0x50000018u, LCD_A0, 0);
+    lcd_command(0xE2u); /* reset software */
+    delay_ms(2u);
+    lcd_command(0xAEu); /* display off */
+    lcd_command(0xA2u); /* bias 1/9, da verificare sul glass */
+    lcd_command(0xA0u); /* ADC normale */
+    lcd_command(0xC8u); /* scansione COM invertita, verificare orientamento */
+    lcd_command(0x40u); /* start line 0 */
+    lcd_command(0x24u); /* resistor ratio iniziale */
+    lcd_command(0x2Fu); /* booster, regulator e follower ON */
+    lcd_command(0x81u); /* electronic volume */
+    lcd_command(0x18u); /* contrasto iniziale, da calibrare */
+    lcd_command(0xA6u); /* pixel non invertiti */
+    lcd_command(0xA4u); /* display segue RAM */
+    st7565_blit_full();
+    lcd_command(0xAFu); /* display ON */
 }
 
 void st7565_clear(void)
@@ -87,8 +143,15 @@ void st7565_draw_text(int x, int y, const char *s)
 
 void st7565_blit_full(void)
 {
-    /* TODO HW: invio SPI separato BK4829, 8 pagine x 128 byte.
-     * Pin LCD CS/A0/CLK/SDA dichiarati ma reset e conflitti mux non
-     * sono ancora confermati: nessun GPIO viene pilotato qui.
-     */
+    for (uint8_t page = 0; page < 8u; ++page) {
+        lcd_pin(0x50000418u, LCD_CS, 0);
+        lcd_pin(0x50000018u, LCD_A0, 0);
+        lcd_send_byte((uint8_t)(0xB0u | page));
+        lcd_send_byte(0x10u); /* colonna alta = 0 */
+        lcd_send_byte(0x00u); /* colonna bassa = 0 */
+        lcd_pin(0x50000018u, LCD_A0, 1);
+        for (uint8_t col = 0; col < 128u; ++col)
+            lcd_send_byte(fb[(uint16_t)page * 128u + col]);
+        lcd_pin(0x50000418u, LCD_CS, 1);
+    }
 }
