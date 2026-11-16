@@ -57,6 +57,14 @@ a target-specific driver and verified before flash release.
 6. A strong signal may desensitize the wide-open RF front end. Software
    filtering cannot remove the receiver's physical front-end limitation.
 
+## Ulteriori fonti community consultate (lettura, non riuso)
+
+- Repository [fagci/k1-scaner](https://github.com/fagci/k1-scaner), README e `src/driver/bk4829.c` / `bk4829.h`: il README descrive BK4829 come compatibile BK4819, ma l'API, gli enum, la tabella registri e molte funzioni mantengono i nomi `BK4819_*` e includono `bk4819-regs.h`. È quindi un port/assunzione di compatibilità, non una prova indipendente della mappa registri BK4829. Nessun codice o valore è stato importato.
+- [Discussione armel #36 “BK4829 register list?”](https://github.com/armel/uv-k1-k5v3-firmware-custom/discussions/36): viene indicato un PDF “1_BK4829 Registers Table.pdf”, ma nella discussione è anche contestato che possa essere la tabella BK4819 semplicemente rinominata. Non è una fonte sufficiente per autorizzare scritture.
+- [Report reverse engineering UV-5RH](https://github.com/amoxu/Baofeng-UV-5RM-5RH-RE/issues/18): riporta un'ipotesi di compatibilità BK4829/FD6818B con BK4819 e test su una radio diversa. È una pista sperimentale su altro hardware, non trasferibile automaticamente a UV-K1 V3.
+
+Conseguenza: i registri AM 0x31, 0x42, 0x2A, 0x2B, 0x2F e il registro filtro 0x43 presenti in sorgenti upstream/community restano riferimenti da investigare, non una specifica BK4829 autonoma. La sequenza Spectrum3D 0x38/0x39/0x30 e letture 0x63/0x67 è una pista di misura più pertinente, ma necessita ancora di verifica sul dump stock 7.03.01 o con lettura controllata del chip.
+
 ## License and attribution
 
 The reviewed Spectrum3D source declares Apache License 2.0 and copyright
@@ -80,13 +88,12 @@ upstream revision and modifications in the project's license inventory.
 - Exact app flash offset and container/update format must be verified against
   the installed UV-K1 bootloader 7.03.01 and the actual stock image.
 - BK4829 register semantics and timing need independent confirmation.
-- Original DSP source files supplied in earlier conversation are not currently
-  available as repository files or retrievable attachments; do not recreate
-  them from filenames or memory.
-- No startup/linker integration, complete firmware build, BIN, memory report,
-  host test report or radio test has yet been produced.
+- Il driver RF attuale resta uno stub: init, tuning, RSSI e AFC non sono implementati.
+- Il repository possiede startup/linker e una build ARM di scaffold; le build precedenti hanno prodotto BIN raw sperimentali, non validati per il bootloader.
+- Non esiste ancora un pacchetto DFU verificato, né una prova di avvio sulla radio.
+- Nessun test RF o test display fisico è stato eseguito.
 
-No flashable firmware is claimed by this audit.
+Nessun firmware flashabile è dichiarato da questo audit.
 
 ## Sweep-path detail (full source inspection)
 
