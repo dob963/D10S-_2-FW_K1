@@ -71,6 +71,9 @@ int main(void)
         ui_spectrum_draw(spec_stable, SPEC_BINS);
         waterfall_push(spec_stable, SPEC_BINS);
         st7565_blit_full();
+        /* Pausa minima tra frame: limita il refresh a circa 10-15 fps
+         * con il clock core di riferimento 8 MHz configurato in hw_init. */
+        delay_ms(67u);
         if (ui_spectrum_poll_event()) ui_spectrum_handle();
     }
 }
