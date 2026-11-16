@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include "system_init.h"
 
 /* Handoff minimale: non riconfigura clock e PLL.
  * Il bootloader K1 lascia lo stato clock in uso; prima della release occorre
