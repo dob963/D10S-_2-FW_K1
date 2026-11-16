@@ -73,11 +73,15 @@ L'origine linker non prova da sola che un'immagine raw arbitraria sia flashabile
 5. Tenere live trace, Peak Hold e Waterfall indipendenti.
 6. Registrare licenze, copyright, NOTICE, revisioni e modifiche prima di riutilizzare codice terzo.
 
-## Stato attuale
+## Stato attuale (aggiornato 2026-11-17)
 
-- Creato linker script di riferimento in `ld/py32f071_app.ld`.
-- Creato documento di verifica pinout in `docs/UPSTREAM_PINOUT_VERIFICATION.md`.
-- I moduli DSP incollati nella conversazione non sono ancora file presenti nella repository.
-- Non sono ancora presenti driver runtime, startup completo, build system o immagine BIN.
-- Nessuna compilazione ARM e nessun test radio sono stati eseguiti.
-- Driver RF e calibrazione flash restano bloccati finché non sono verificate le sequenze BK4829 e le aree dati riservate.
+- Linker `ld/py32f071_app.ld`: applicazione da `0x08002800`, RAM 16 KiB, finestra applicativa limitata a 96 KiB come budget prudenziale per il profilo DFU K1.
+- Startup assembly e `SystemInit()` minimale presenti; la clock tree non viene riconfigurata e l'ipotesi 8 MHz per SysTick resta da misurare.
+- `hw_init.c/h`: clock GPIOA/B/F, pin RF PB8/PB9/PF9, pin display ST7565 e predisposizione matrice keypad. Non ancora verificato elettricamente.
+- `bk4829_drv.c/h`: adattatore e API presenti; init RX, tuning, RSSI e AFC restano TODO perché il datasheet pubblico non pubblica la tabella registri.
+- `calib.c/h`: offset zero di fallback; salvataggio flash disabilitato finché non è individuata una pagina dedicata senza sovrapposizioni.
+- Moduli DSP e stabilizer presenti; sweep engine ora richiama l'API BK4829. Il renderer live non usa cross-fade né clamp del gradiente.
+- `main.c`, Makefile e workflow ARM GCC presenti come scaffold di compilazione.
+- Il workflow CI è stato aggiunto, ma non è ancora stato verificato un esito verde.
+- Nessuna compilazione ARM locale, nessun BIN validato e nessun test radio sono stati eseguiti.
+- Il firmware non è ancora flashabile in sicurezza: driver RF, renderer ST7565, clock, calibrazione e formato DFU restano gate aperti.
