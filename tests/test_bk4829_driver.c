@@ -94,6 +94,13 @@ int main(void)
     bk4829_set_freq(146000000u);
     assert(write_count == 0u);
 
+    /* Frequenze fuori dalle bande dichiarate dal datasheet: nessuna scrittura. */
+    reset_logs();
+    regs[0x30] = 0x1234u;
+    bk4829_init();
+    bk4829_set_freq(650000000u);
+    assert(write_count == 0u);
+
     /* AFC resta esplicitamente non implementato. */
     assert(bk4829_read_afc() == 0);
 
