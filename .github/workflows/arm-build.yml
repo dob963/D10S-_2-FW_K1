@@ -17,6 +17,10 @@ jobs:
           mkdir -p build
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_bk4829_driver.c src/bk4829_drv.c -o build/test_bk4829_driver
           ./build/test_bk4829_driver
+      - name: DSP no-cascade and waterfall isolation tests
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_dsp_no_cascade.c src/stabilizer.c src/median3.c src/waterfall.c -o build/test_dsp_no_cascade
+          ./build/test_dsp_no_cascade
       - name: Install ARM GCC
         run: |
           sudo apt-get update
