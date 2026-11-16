@@ -2,7 +2,7 @@
  * Linker script indipendente per UV-K1 standard / PY32F071.
  *
  * Layout applicazione derivato dal linker upstream Armel:
- *   FLASH ORIGIN = 0x08002800, LENGTH = 118 KiB
+ *   FLASH ORIGIN = 0x08002800, LENGTH = 96 KiB (limite prudenziale DFU K1)
  *   RAM          = 0x20000000, LENGTH = 16 KiB
  *
  * Il toolkit Quansheng documenta la combinazione UV-K1 + bootloader 7.03.01
@@ -23,7 +23,7 @@ _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x08002800, LENGTH = 118K
+    FLASH (rx)  : ORIGIN = 0x08002800, LENGTH = 96K
     RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 16K
 }
 
@@ -132,7 +132,7 @@ SECTIONS
     ASSERT((_ebss <= __StackLimit),
            "RAM overflow: .data/.bss invade la riserva stack")
     ASSERT((LOADADDR(.data) + SIZEOF(.data)) <= (ORIGIN(FLASH) + LENGTH(FLASH)),
-           "FLASH overflow: immagine applicazione oltre 118 KiB")
+           "FLASH overflow: immagine applicazione oltre 96 KiB (limite pacchetto K1 documentato)")
 
     /DISCARD/ :
     {
