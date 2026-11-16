@@ -19,7 +19,6 @@
 .extern _sbss
 .extern _ebss
 .extern SystemInit
-.extern __libc_init_array
 .extern main
 
 .global Reset_Handler
@@ -60,7 +59,6 @@ Reset_Handler:
     b 3b
 
 4:
-    bl __libc_init_array
     bl main
 5:
     b 5b
