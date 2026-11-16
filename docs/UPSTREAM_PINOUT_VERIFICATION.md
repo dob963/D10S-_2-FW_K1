@@ -29,7 +29,7 @@ Mappatura dal driver:
 - PA6: LCD A0 (dato/comando)
 - PB2: LCD CS
 
-Il driver configura SPI1 hardware, CPOL HIGH, CPHA 2EDGE, MSB first, prescaler /64. Il reset e gli altri segnali di pannello vanno mantenuti coerenti con il driver e con la board; non inventare pin non documentati.
+Il driver configura SPI1 hardware, CPOL HIGH, CPHA 2EDGE, MSB first, prescaler /64. La sequenza ST7565 upstream usa bias 1/9, COM normale, SEG invertito, EV 31, resistor ratio 5.0, accensione a stadi del power circuit e reset software E2. La funzione di reset hardware è un no-op: il commento upstream dichiara che sul K1 non è disponibile un reset hardware utilizzabile. La scrittura delle pagine usa offset colonna +4. La nuova implementazione bit-bang replica questi parametri senza copiare il driver; il timing effettivo resta da misurare sulla revisione PCB reale.
 
 ### Tastiera e GPIO
 
