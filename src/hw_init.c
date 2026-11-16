@@ -131,8 +131,8 @@ void bk_spi_write(uint8_t reg, uint16_t value)
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
     /* BK4829 3-wire: R/W + A6..A0 + D15..D0, MSB first.
-     * Datasheet timing: latch on SCK rising edge. R/W=0 (write) da confermare
-     * con cattura SPI sulla scheda UV-K1 V3 prima di autorizzare scritture RF. */
+     * R/W=0 write, fonte K1 App/driver/bk4829.c righe 273-275.
+     * Il datasheet BK4829 conferma latch sul fronte SCK crescente. */
     rf_send_bit(0u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     for (bit = 15; bit >= 0; --bit) rf_send_bit((value >> bit) & 1u);
@@ -146,7 +146,7 @@ uint16_t bk_spi_read(uint8_t reg)
     reg &= 0x7Fu;
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
-    /* R/W=1 (read); polarita' da confermare con cattura del bus stock. */
+    /* R/W=1 read, fonte K1 App/driver/bk4829.c righe 237-239. */
     rf_send_bit(1u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     rf_sdio_input();
