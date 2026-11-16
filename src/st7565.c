@@ -22,10 +22,12 @@ static void lcd_send_byte(uint8_t value)
 {
     for (int bit = 7; bit >= 0; --bit) {
         lcd_pin(0x50000018u, LCD_MOSI, (value >> bit) & 1u);
+        /* SPI mode 3: SCK alto a riposo, campionamento sul secondo fronte
+         * (salita). Configurazione rilevata nel driver upstream K1 ST7565. */
+        lcd_pin(0x50000018u, LCD_SCK, 0);
         __asm volatile ("nop");
         lcd_pin(0x50000018u, LCD_SCK, 1);
         __asm volatile ("nop");
-        lcd_pin(0x50000018u, LCD_SCK, 0);
     }
 }
 
@@ -34,6 +36,15 @@ static void lcd_command(uint8_t value)
     lcd_pin(0x50000418u, LCD_CS, 0);
     lcd_pin(0x50000018u, LCD_A0, 0);
     lcd_send_byte(value);
+    lcd_pin(0x50000418u, LCD_CS, 1);
+}
+
+static void lcd_command_pair(uint8_t command, uint8_t parameter)
+{
+    lcd_pin(0x50000418u, LCD_CS, 0);
+    lcd_pin(0x50000018u, LCD_A0, 0);
+    lcd_send_byte(command);
+    lcd_send_byte(parameter);
     lcd_pin(0x50000418u, LCD_CS, 1);
 }
 
@@ -75,22 +86,34 @@ void st7565_init(void)
      * sul pannello reale; non sono registri BK4829.
      */
     lcd_pin(0x50000418u, LCD_CS, 1);
-    lcd_pin(0x50000018u, LCD_SCK, 0);
+    lcd_pin(0x50000018u, LCD_SCK, 1); /* clock idle alto: SPI mode 3 */
     lcd_pin(0x50000018u, LCD_A0, 0);
-    lcd_command(0xE2u); /* reset software */
-    delay_ms(2u);
-    lcd_command(0xAEu); /* display off */
-    lcd_command(0xA2u); /* bias 1/9, da verificare sul glass */
-    lcd_command(0xA0u); /* ADC normale */
-    lcd_command(0xC8u); /* scansione COM invertita, verificare orientamento */
+    lcd_command(0xAEu); /* display OFF prima del reset software */
+    lcd_command(0xE2u); /* reset software; K1 non espone reset hardware LCD */
+    delay_ms(120u);
+
+    /* Parametri derivati dal driver K1 ST7565 upstream:
+     * App/driver/st7565.c: bias 1/9, COM normale, SEG invertito,
+     * EV 31, resistor ratio 5.0. Reimplementazione autonoma.
+     */
+    lcd_command(0xA2u); /* bias 1/9 */
+    lcd_command(0xC0u); /* COM normale */
+    lcd_command(0xA1u); /* SEG invertito */
+    lcd_command(0xA6u); /* display normale */
+    lcd_command(0xA4u); /* RAM normale */
+    lcd_command(0x24u); /* resistor ratio 5.0 */
+    lcd_command_pair(0x81u, 31u); /* contrasto iniziale 31/63 */
+
+    /* Sequenza di accensione del circuito interno: booster/regolatore/follower. */
+    lcd_command(0x2Bu);
+    delay_ms(1u);
+    lcd_command(0x2Eu);
+    delay_ms(1u);
+    for (uint8_t i=0; i<4u; ++i) lcd_command(0x2Fu);
+    delay_ms(40u);
+
     lcd_command(0x40u); /* start line 0 */
-    lcd_command(0x24u); /* resistor ratio iniziale */
-    lcd_command(0x2Fu); /* booster, regulator e follower ON */
-    lcd_command(0x81u); /* electronic volume */
-    lcd_command(0x18u); /* contrasto iniziale, da calibrare */
-    lcd_command(0xA6u); /* pixel non invertiti */
-    lcd_command(0xA4u); /* display segue RAM */
-    st7565_blit_full();
+    st7565_blit_full(); /* azzera le 8 pagine RAM prima di accendere */
     lcd_command(0xAFu); /* display ON */
 }
 
@@ -148,7 +171,7 @@ void st7565_blit_full(void)
         lcd_pin(0x50000018u, LCD_A0, 0);
         lcd_send_byte((uint8_t)(0xB0u | page));
         lcd_send_byte(0x10u); /* colonna alta = 0 */
-        lcd_send_byte(0x00u); /* colonna bassa = 0 */
+        lcd_send_byte(0x04u); /* offset colonna 4: glass K1 usa RAM 132-col */
         lcd_pin(0x50000018u, LCD_A0, 1);
         for (uint8_t col = 0; col < 128u; ++col)
             lcd_send_byte(fb[(uint16_t)page * 128u + col]);
