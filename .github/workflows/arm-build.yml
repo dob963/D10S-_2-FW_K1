@@ -1,0 +1,28 @@
+name: ARM build check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Build raw application image
+        run: make clean all
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: uv-k1-v3-spectrum-build
+          path: |
+            build/spectrum_k1_v3.elf
+            build/spectrum_k1_v3.bin
+            build/spectrum_k1_v3.map
