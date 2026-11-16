@@ -92,7 +92,9 @@ int16_t bk4829_read_rssi(void)
      * return ReadRegister(REG_67) & 0x01FF.
      * Restituisce RSSI grezzo 9 bit, non dBm.
      */
-    return (int16_t)(bk_spi_read(BK_REG_RSSI) & 0x01FFu);
+    uint16_t raw = bk_spi_read(BK_REG_RSSI);
+    if (raw == 0xFFFFu) return 0; /* bus non valido: non mostrare falso picco */
+    return (int16_t)(raw & 0x01FFu);
 }
 
 int16_t bk4829_read_afc(void)
