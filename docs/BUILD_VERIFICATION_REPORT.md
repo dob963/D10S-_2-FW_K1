@@ -3,8 +3,9 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Workflow: [43984129008](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43984129008)  
-Commit verificato: `1b2ebbf908820fc14393ec1e04913dc9eb293bf9`
+Ultima build ARM completata: [43985052881](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985052881)  
+Commit build: `7c18d2fe494c671df23957d8531d2aa2a87d0d1f`  
+Nota: le modifiche successive al driver RF per saltare letture quando REG_30 è invalido hanno superato i test host; la relativa build ARM è in corso.
 
 ## Esito compilazione e test
 
@@ -20,22 +21,23 @@ Configurazione:
 Test host con `gcc -std=c11 -Wall -Wextra -Werror`:
 - BK4829 adapter: PASS (tuning 0x38/0x39/0x30, RSSI 9 bit, glitch wait, bus read non valido, limiti banda)
 - DSP no-cascade/Waterfall: PASS (median, picco isolato, assenza propagazione laterale, Waterfall disabilitato senza scritture)
+- Sweep mapping: PASS (coarse/fine, mask validi, span ridotto e range non valido)
 - Calibrazione DC: PASS (offset default, saturazione negativa, limiti indice)
 
 Metriche riportate dal linker:
-- FLASH: 5.636 byte su 96 KiB (5,73%)
-- RAM `.data + .bss`: 5.808 byte su 16 KiB (35,45%)
-- `text`: 5.632 byte
+- FLASH: 6.464 byte su 96 KiB (6,58%)
+- RAM `.data + .bss`: 6.064 byte su 16 KiB (37,01%)
+- `text`: 6.460 byte
 - `data`: 4 byte
-- `bss`: 5.804 byte
+- `bss`: 6.060 byte
 - stack riservato dal linker: 1.536 byte
-- RAM residua dopo `.data/.bss` e riserva stack: 9.040 byte
-- BIN raw: 5.636 byte
+- RAM residua dopo `.data/.bss` e riserva stack: 8.784 byte
+- BIN raw: 6.464 byte
 
 Artefatto GitHub Actions:
 - Nome: `uv-k1-v3-spectrum-build`
-- ID: `14283952896`
-- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43984129008/artifacts/14283952896)
+- ID: `14284238743`
+- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985052881/artifacts/14284238743)
 
 ## Warning
 
