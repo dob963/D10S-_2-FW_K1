@@ -68,7 +68,7 @@ int main(void)
     assert(write_regs[49] == 0x09u && write_values[49] == 0xF09Fu);
     assert(write_regs[50] == 0x33u && write_values[50] == 0x9000u);
 
-    /* Retune: REG_30 letto dalla radio, bit AF DAC (9) azzerato. */
+    /* Retune 146 MHz: soglia upstream 28 MHz => UHF LNA GPIO3. */
     reset_logs();
     bk4829_set_freq(146000000u);
     const uint32_t f10 = 14600000u;
@@ -79,9 +79,9 @@ int main(void)
     assert(write_regs[3] == 0x30u && write_values[3] == 0u);
     assert(write_regs[4] == 0x30u && write_values[4] == 0xA145u);
 
-    /* Cambio VHF->UHF: GPIO4 off, GPIO3 on; altri bit preservati. */
+    /* Cambio UHF->VHF sotto 28 MHz: GPIO3 off, GPIO4 on. */
     reset_logs();
-    bk4829_set_freq(430000000u);
+    bk4829_set_freq(27000000u);
     assert(write_count == 5u);
     assert(write_regs[0] == 0x33u && write_values[0] == 0x9008u);
     assert(write_regs[1] == 0x38u);
