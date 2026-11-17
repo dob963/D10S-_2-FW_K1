@@ -102,7 +102,14 @@ static void put_mhz(char *p, uint32_t hz)
     if (mhz > 999u) mhz = 999u;
     put3(p, mhz); p[3] = '.'; put3(p + 4, frac); p[7] = '\0';
 }
-static void clamp_center_to_span(void)\n{\n    uint32_t half=span_hz/2u;\n    uint32_t lo=min_center+half, hi=max_center-half;\n    if(center_hz<lo)center_hz=lo;\n    if(center_hz>hi)center_hz=hi;\n}\nvoid ui_spectrum_init(void)
+static void clamp_center_to_span(void)
+{
+    uint32_t half=span_hz/2u;
+    uint32_t lo=min_center+half, hi=max_center-half;
+    if(center_hz<lo)center_hz=lo;
+    if(center_hz>hi)center_hz=hi;
+}
+void ui_spectrum_init(void)
 {
     for (int i=0;i<SPEC_BINS;++i) peak[i]=0;
     center_hz=146000000u; span_index=3u; span_hz=spans[span_index];
