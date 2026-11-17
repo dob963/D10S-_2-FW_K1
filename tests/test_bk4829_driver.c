@@ -116,7 +116,7 @@ int main(void)
     reset_logs();
     fail_ctrl_read = 1;
     bk4829_init();
-    assert(write_count == 54u);
+    assert(write_count == 55u);
     reset_logs();
     bk4829_set_freq(146000000u);
     bk4829_wait_settle();
