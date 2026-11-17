@@ -55,7 +55,7 @@ Nessun warning del compilatore C è stato riportato nella build. I warning di No
 
 La build e i test host provano la compilabilità e il comportamento software isolato, non il funzionamento fisico. In particolare:
 - Il display ST7565 è compilato, ma non è stato testato sul pannello reale; contrasto, orientamento, timing e refresh richiedono verifica sulla specifica revisione PCB.
-- Il driver BK4829 non è completo: la sequenza di init RF resta TODO; `bk4829_read_afc()` resta TODO e restituisce placeholder 0. Le letture/tuning derivano da sorgenti K1 che mantengono nomi BK4819 e devono essere confermate sul dump stock 7.03.01.
+- Il driver BK4829 non è completo: la sequenza di init RF resta TODO; `bk4829_read_afc()` resta TODO e restituisce placeholder 0. Il gate `bk4829_afc_is_valid()` resta falso: la pipeline bypassa la reiezione spurie finché l'AFC non è verificato, evitando di simulare una tripla coerenza con AFC=0. Le letture/tuning derivano da sorgenti K1 che mantengono nomi BK4819 e devono essere confermate sul dump stock 7.03.01.
 - `bk4829_init()` conserva REG 0x30 solo se la lettura è valida; non inizializza i registri RF.
 - Il bus 3-wire è implementato secondo datasheet e sorgenti K1, ma non è stato verificato con logic analyzer sulla radio.
 - La scansione keypad Fn1/Fn2/F-Lock non è implementata: i GPIO sono predisposti, gli eventi UI restano TODO.
