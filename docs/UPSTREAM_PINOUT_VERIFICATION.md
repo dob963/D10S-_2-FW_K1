@@ -39,7 +39,7 @@ Da `App/board.c` e `App/driver/keyboard.c`:
 - Backlight: PF8.
 - GPIOA, GPIOB, GPIOC e GPIOF vengono abilitati nella routine GPIO upstream.
 
-La mappa logica tasti è definita in `keyboard.c`; non esiste evidenza per tre pin separati denominati fn1, fn2 e F-lock. I tasti laterali e il tasto F fanno parte della matrice.
+La mappa logica tasti è definita in `keyboard.c`; non esiste evidenza per tre pin separati denominati fn1, fn2 e F-lock. I tasti laterali e il tasto F fanno parte della matrice. La scansione locale ora rispetta la polarità attiva-bassa: colonne PB6..PB3 pilotate una alla volta, righe PB15..PB12 in ingresso con pull-up; i tasti laterali vengono letti con tutte le colonne alte. Il debounce applicativo richiede tre letture stabili separate dai cicli sweep.
 
 ### Interfaccia RF
 
