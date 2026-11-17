@@ -33,8 +33,9 @@
 #define SYST_CSR_CLKSOURCE (1u << 2)
 #define SYST_CSR_COUNTFLAG (1u << 16)
 
-/* Ritardo locale: 35 iterazioni NOP con barriera, senza importare la
- * macro assembly upstream. Frequenza core fissata a 8 MHz da SystemInit.
+/* Ritardo locale con barriera: 6 iterazioni NOP più overhead di loop
+ * (circa 35-45 cicli), senza importare la macro assembly upstream.
+ * Frequenza core fissata a 8 MHz da SystemInit.
  */
 static void rf_short_delay(void)
 {
