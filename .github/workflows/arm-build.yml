@@ -30,6 +30,10 @@ jobs:
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_sweep_mapping.c src/sweep_engine.c -o build/test_sweep_mapping
           ./build/test_sweep_mapping
+      - name: Stabilizer regression tests
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_stabilizer.c src/stabilizer.c -o build/test_stabilizer
+          ./build/test_stabilizer
       - name: Peak tracker regression tests
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_peak_tracker.c src/peak_tracker.c -o build/test_peak_tracker
