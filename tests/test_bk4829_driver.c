@@ -59,23 +59,33 @@ int main(void)
     reset_logs();
     regs[0x30] = 0xA345u;
     bk4829_init();
-    assert(write_count == 50u);
+    assert(write_count == 51u);
     assert(write_regs[0] == 0x00u && write_values[0] == 0x8000u);
     assert(write_regs[1] == 0x00u && write_values[1] == 0x0000u);
     assert(write_regs[21] == 0x19u && write_values[21] == 0x1041u);
     assert(write_regs[19] == 0x73u && write_values[19] == 0x4691u);
     assert(write_regs[34] == 0x09u && write_values[34] == 0x006Fu);
     assert(write_regs[49] == 0x09u && write_values[49] == 0xF09Fu);
+    assert(write_regs[50] == 0x33u && write_values[50] == 0x9000u);
 
     /* Retune: REG_30 letto dalla radio, bit AF DAC (9) azzerato. */
     reset_logs();
     bk4829_set_freq(146000000u);
     const uint32_t f10 = 14600000u;
-    assert(write_count == 4u);
-    assert(write_regs[0] == 0x38u && write_values[0] == (uint16_t)f10);
-    assert(write_regs[1] == 0x39u && write_values[1] == (uint16_t)(f10 >> 16));
-    assert(write_regs[2] == 0x30u && write_values[2] == 0u);
-    assert(write_regs[3] == 0x30u && write_values[3] == 0xA145u);
+    assert(write_count == 5u);
+    assert(write_regs[0] == 0x33u && write_values[0] == 0x9004u);
+    assert(write_regs[1] == 0x38u && write_values[1] == (uint16_t)f10);
+    assert(write_regs[2] == 0x39u && write_values[2] == (uint16_t)(f10 >> 16));
+    assert(write_regs[3] == 0x30u && write_values[3] == 0u);
+    assert(write_regs[4] == 0x30u && write_values[4] == 0xA145u);
+
+    /* Cambio VHF->UHF: GPIO4 off, GPIO3 on; altri bit preservati. */
+    reset_logs();
+    bk4829_set_freq(430000000u);
+    assert(write_count == 5u);
+    assert(write_regs[0] == 0x33u && write_values[0] == 0x9008u);
+    assert(write_regs[1] == 0x38u);
+    assert(write_regs[2] == 0x39u);
 
     /* RSSI grezzo: 9 bit; una lettura bus tutta alta è rifiutata. */
     regs[0x67] = 0x01ABu;
