@@ -25,6 +25,10 @@ jobs:
           grep -q 'spec_med_in' src/main.c
           grep -q 'bk4829_afc_is_valid' src/main.c
           if grep -q 'median3(spec_avg' src/main.c; then echo 'In-place median cascade is forbidden'; exit 1; fi
+      - name: Adaptive sweep frequency mapping tests
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_sweep_mapping.c src/sweep_engine.c -o build/test_sweep_mapping
+          ./build/test_sweep_mapping
       - name: Install ARM GCC
         run: |
           sudo apt-get update
