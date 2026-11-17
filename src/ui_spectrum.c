@@ -111,5 +111,15 @@ void ui_spectrum_draw(const int8_t *spec, int n)
     }
 }
 
-int ui_spectrum_poll_event(void) { return 0; }
-void ui_spectrum_handle(void) { }
+int ui_spectrum_poll_event(void)
+{
+    /* TODO: scansione matrice keypad e mappatura Fn1/Fn2/F-Lock dopo
+     * verifica della polarità e dei codici tasto sulla revisione UV-K1 V3.
+     */
+    return 0;
+}
+
+void ui_spectrum_handle(void)
+{
+    /* TODO: dispatch eventi keypad quando la scansione è validata. */
+}
