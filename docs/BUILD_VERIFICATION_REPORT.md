@@ -56,3 +56,37 @@ Implementati:
 - Backup calibrazione/configurazione obbligatorio prima di qualsiasi flash.
 - Il raw BIN non va flashato direttamente né rinominato come DFU. Prima verificare formato immagine, bootloader, vettori e strumento DFU compatibile.
 - Non definire il firmware pronto all'uso finché RES, pinout della scheda, RF, bootloader e ripristino calibrazione non sono stati verificati su hardware.
+
+
+## Ricerca schema elettrico / reset ST7565 — 2026-11-17
+
+Ricerca pubblica eseguita su GitHub e sul materiale di teardown Quansheng K1:
+- Repository teardown: https://github.com/armel/k1-teardown
+- Albero dei file: https://github.com/armel/k1-teardown/tree/main
+- Contiene README, datasheet BK4829/PY32F071, dump firmware e fotografie PCB `K1_VIEW_*.png`; non è presente uno schema elettrico completo o una netlist pubblicata.
+- Il README identifica K1 con PY32F071, 128 KiB Flash e 16 KiB SRAM.
+
+**Evidenza importante sul reset LCD:** nel sorgente target UV-K1 upstream
+`App/driver/st7565.c`, funzione `ST7565_Init()` e funzione
+`ST7565_HardwareReset()`, il commento dice esplicitamente che sul K1
+non esiste un pin hardware reset utilizzabile; `ST7565_HardwareReset()`
+è un no-op. La routine upstream invia poi il comando ST7565 software reset
+`0xE2`. File:
+https://github.com/armel/uv-k1-k5v3-firmware-custom/blob/main/App/driver/st7565.c
+
+Questo è un dato software del firmware di riferimento, non una misura
+elettrica e non dimostra se il pin RES del controller sia legato a VDD,
+a un reset comune o lasciato non connesso. Non è stata trovata evidenza
+sufficiente per assegnare RES a un GPIO PY32F071. **Non collegare né
+pilotare un GPIO ipotetico.**
+
+Il progetto locale mantiene quindi il TODO hardware e non inventa un pin.
+La scelta di non inviare `0xE2` segue il requisito specifico di questo
+progetto, ma differisce dall'inizializzazione upstream; di conseguenza
+la funzionalità del display non può essere considerata confermata finché
+non si verifica lo schema/net della revisione PCB oppure non si autorizza
+una sequenza di reset alternativa compatibile con l'hardware effettivo.
+
+Per chiudere con evidenza: occorre ottenere lo schema di servizio dal
+produttore oppure ispezionare le fotografie teardown ad alta risoluzione
+e misurare la continuità tra RES del pannello, GPIO MCU, VDD e reset comune.
