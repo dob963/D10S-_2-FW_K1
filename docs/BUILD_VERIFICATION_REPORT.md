@@ -7,10 +7,10 @@ Commit aggiornato: `9c040fedaec80ec1f8f06538ebf76dc2db80d04a` (build CI in corso
 
 ## Esito CI
 
-**SUCCESS** — GitHub Actions run #141:
-https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44047292574
+**SUCCESS per il commit precedente** — GitHub Actions run #147:
+https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44047482312
 
-Tutti gli step sono terminati con esito SUCCESS:
+Il commit `b0bc0791e0df43f7f049f0af32d710766f7756dc` ha superato tutti gli step. La nuova build con keypad e peak tracker è in verifica CI separata.
 - test host BK4829, inclusa selezione LNA VHF/UHF;
 - test DSP no-cascade e isolamento Waterfall;
 - test sweep uniforme, copertura completa e mapping frequenza;
@@ -55,7 +55,10 @@ La verifica ASSERT del linker per la separazione RAM/stack è passata.
 4. Rimosso l'AGC software che modificava il guadagno a ogni campione e falsava i rapporti d'ampiezza tra frequenze.
 5. RSSI grezzo normalizzato a una scala grafica fissa 0..127; RBW non dichiarata quando non è calibrata.
 6. Selezione del percorso RF VHF/UHF via REG 0x33: GPIO4/VHF sotto 280 MHz e GPIO3/UHF da 280 MHz, preservando gli altri bit e bloccando la scrittura se REG 0x30 non è leggibile.
-7. Aggiunto inventario di provenienza/licenze in `docs/THIRD_PARTY.md`.\n8. Corretta la direzione GPIO della matrice keypad: colonne output, righe input pull-up; implementati debounce e mappa logica UV-K1.\n9. Aggiunti controlli Spectrum: UP/DOWN centro a passi 25 kHz, MENU seleziona span 0,5/1/2/4 MHz, EXIT resetta, F commuta peak hold, STAR azzera i picchi, tasti laterali cambiano span.\n10. Aggiunto tracker DSP: noise floor percentile 20%, conferma del picco su due sweep consecutivi e interpolazione parabolica sub-bin; visualizzazione frequenza picco e noise floor.
+7. Aggiunto inventario di provenienza/licenze in `docs/THIRD_PARTY.md`.
+8. Corretta la direzione GPIO della matrice keypad: colonne output, righe input pull-up; implementati debounce e mappa logica UV-K1.
+9. Aggiunti controlli Spectrum: UP/DOWN centro a passi 25 kHz, MENU seleziona span 0,5/1/2/4 MHz, EXIT resetta, F commuta peak hold, STAR azzera i picchi, tasti laterali cambiano span.
+10. Aggiunto tracker DSP: noise floor percentile 20%, conferma del picco su due sweep consecutivi e interpolazione parabolica sub-bin; visualizzazione frequenza picco e noise floor.
 
 ## Blocchi ancora aperti prima della prova radio
 
@@ -69,4 +72,4 @@ La build e i test host dimostrano la compilabilità e il comportamento dei modul
 - Calibrazione: nessuna area flash viene modificata; backup e layout devono essere verificati prima del flash.
 - Packaging: raw BIN non equivale a DFU; occorre validare il flusso di flashing e il recovery per il target effettivo.
 
-**Decisione:** build compilata e test automatici superati. Non dichiarare il firmware pronto per il flash finché i blocchi hardware/bootloader sopra elencati non sono chiusi.
+**Decisione:** il commit precedente è compilato e testato. Il commit aggiornato è in verifica CI; nessuna prova radio o flash è stata eseguita. Non dichiarare il firmware pronto per il flash finché i blocchi hardware/bootloader sopra elencati non sono chiusi.
