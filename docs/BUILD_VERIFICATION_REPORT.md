@@ -7,7 +7,7 @@ Commit compilato: `f5918780ecf8648025378c7ea8ffca8728ab2757`
 
 ## Esito CI
 
-<badge>SUCCESS</badge> GitHub Actions run #141:
+**SUCCESS** — GitHub Actions run #141:
 https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44047292574
 
 Tutti gli step sono terminati con esito SUCCESS:
