@@ -38,7 +38,7 @@
  */
 static void rf_short_delay(void)
 {
-    for (volatile uint32_t i = 0u; i < 35u; ++i)
+    for (volatile uint32_t i = 0u; i < 6u; ++i)
         __asm volatile ("nop" ::: "memory");
 }
 
