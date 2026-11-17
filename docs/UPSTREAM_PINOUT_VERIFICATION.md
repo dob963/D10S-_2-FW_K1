@@ -71,3 +71,13 @@ Non confondere questa evidenza con la prova che un'immagine raw arbitraria sia f
 5. Linker: usare FLASH origin `0x08002800`, RAM `0x20000000` 16K, con assert di overflow e riserva stack.
 6. Chip RF: conservare la denominazione BK4829 del target V3 solo dopo conferma tramite BOM/marking affidabile; la nomenclatura legacy interna upstream è ambigua. Non inventare registri, PLL o formula di tuning.
 7. Tutto il codice di terzi resta soggetto alle rispettive licenze e avvisi. Questo documento riporta risultati e riferimenti; non copia sorgenti upstream.
+
+
+## Aggiornamento implementazione 2026-11-17
+
+- PF8 è il backlight LCD. La scheda upstream lo configura come uscita attiva-alta; il firmware locale ora lo mantiene spento durante l'init ST7565 e lo accende dopo il display.
+- `SystemInit` locale imposta HSI a 8 MHz con trim di fabbrica, seleziona HSI come SYSCLK, imposta HCLK /1 e sposta VTOR a `0x08002800`. La logica segue i registri e le posizioni definite dal firmware ufficiale Puya PY32F071 (BSD-3-Clause); è una reimplementazione, non una copia del file vendor.
+- Il bus RF ora campiona SDA nella fase bassa prima del fronte SCL e usa una temporizzazione equivalente al `SHORT_DELAY()` del driver UV-K1 consultato.
+- Il driver RF avvia esplicitamente il ricevitore (REG37/REG30) e imposta il filtro wide REG43=`0x3028`; non dipende più dallo stato lasciato dal bootloader.
+
+Questi interventi migliorano la coerenza dell'inizializzazione ma non costituiscono verifica su PCB o misure RF.
