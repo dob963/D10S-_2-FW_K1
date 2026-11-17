@@ -29,9 +29,7 @@ Il riferimento è distribuito sotto BSD-3-Clause (avvisi Puya e ST). È stato co
 
 ## Correzione applicata dopo l'audit
 
-Il commit `b53a706b78514d7f74ec8d082b109793115219be` aggiorna `src/system_init.c`: all'avvio l'applicazione imposta `SCB->VTOR` a `0x08002800` e applica DSB/ISB prima di proseguire. La modifica non riconfigura clock o PLL e non cambia la logica DSP.
-
-Resta da verificare sul dispositivo che il bootloader 7.03.01 entri effettivamente nel reset handler dell'immagine e che il vettore sia accettato dal formato di caricamento usato.
+La prima prova di impostazione diretta di `SCB->VTOR` è stata ritirata nel commit `fc8a03964069d5b0f3bd2a8e0f173cc999d48959`: la documentazione CMSIS segnala che VTOR è opzionale in Cortex-M0+ e la tabella generica non garantisce che sia implementato nel PY32F071 specifico. Non è corretto scrivere un registro non confermato. `SystemInit()` resta quindi neutra. Occorre verificare nel CMSIS/header e nel Reference Manual della revisione esatta PY32F071, quindi nel bootloader 7.03.01, il meccanismo effettivo di vettorizzazione a `0x08002800` prima di abilitare interrupt.
 
 ## Esito
 
