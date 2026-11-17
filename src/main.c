@@ -46,7 +46,7 @@ int main(void)
         stabilizer_apply(&stab,spec_clean,spec_stable,SPEC_BINS);
         peak_tracker_update(&peak_state,spec_stable,SPEC_BINS,&peak_result);
         uint32_t peak_frequency=0u;
-        if(peak_result.peak_bin>=0){int64_t step=(int64_t)(f_stop-f_start)/(SPEC_BINS-1);int64_t f=(int64_t)f_start+(int64_t)peak_result.peak_bin*step+(step*peak_result.peak_offset_q8)/256;if(f>=(int64_t)f_start&&f<=(int64_t)f_stop)peak_frequency=(uint32_t)f;}
+        if(peak_result.peak_bin>=0){int64_t width=(int64_t)(f_stop-f_start);int64_t f=(int64_t)f_start+(width*peak_result.peak_bin)/(SPEC_BINS-1)+(width*peak_result.peak_offset_q8)/(256*(SPEC_BINS-1));if(f>=(int64_t)f_start&&f<=(int64_t)f_stop)peak_frequency=(uint32_t)f;}
         ui_spectrum_set_detection(peak_frequency,peak_result.peak_level,peak_result.noise_floor);
         ui_spectrum_draw(spec_stable,SPEC_BINS);
         waterfall_push(spec_clean,SPEC_BINS);
