@@ -8,11 +8,11 @@ PYTHON  ?= python3
 
 TARGET := uvk1_spectrum
 CPUFLAGS := -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft
-CFLAGS := $(CPUFLAGS) -std=c11 -Os -ffunction-sections -fdata-sections \\
+CFLAGS := $(CPUFLAGS) -std=c11 -Os -ffunction-sections -fdata-sections \
           -Wall -Wextra -Wno-unused-parameter -Iinc
 ASFLAGS := $(CPUFLAGS) -x assembler-with-cpp
-LDFLAGS := $(CPUFLAGS) -nostartfiles -Tld/py32f071_app.ld -Wl,--gc-sections \\
-           -Wl,-Map=build/$(TARGET).map -Wl,--print-memory-usage \\
+LDFLAGS := $(CPUFLAGS) -nostartfiles -Tld/py32f071_app.ld -Wl,--gc-sections \
+           -Wl,-Map=build/$(TARGET).map -Wl,--print-memory-usage \
            --specs=nano.specs --specs=nosys.specs
 LDLIBS := -lc -lgcc -lnosys
 
