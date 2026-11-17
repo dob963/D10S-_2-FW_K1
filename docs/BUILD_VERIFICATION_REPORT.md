@@ -1,84 +1,61 @@
 # Rapporto verifica build — UV-K1 V3 Spectrum
 
-Data verifica: 2026-11-17  
-Repository: `dob963/D10S-_2-FW_K1`  
-Branch: `main`  
-Ultima build ARM completata: [43985515540](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985515540)  
-Commit del rapporto: `956da5bf2c9cf55c1a6f9df81b012344b9272465`  
-La build include i test host BK4829, DSP/Waterfall e mappatura sweep adattivo.
+Data: 2026-11-17  
+Repository: `dob963/D10S-_2-FW_K1`, branch `main`
 
-## Esito compilazione e test
+## Stato build
 
-GitHub Actions ha completato con esito `success` i test host, installazione toolchain, compilazione ARM, linking, generazione BIN raw e caricamento artefatti.
+Ultima build ARM completata con esito SUCCESS:
+- Run: https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44040415949
+- Commit compilato: `4b8fd0b34d61105bf0fe8974df2a9a6fbf384f33`
+- Toolchain: `arm-none-eabi-gcc`, `-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft`
+- Test host BK4829, DSP/no-cascade/waterfall e sweep: PASS
+- Dimensione riportata dal job: raw BIN 6.692 byte; RAM statica 6.064 byte (da log del job).
 
-Configurazione:
-- `arm-none-eabi-gcc`
-- `-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft`
-- `-std=c11 -Os`
-- linker `ld/py32f071_app.ld`
-- output ELF, BIN raw e MAP
+Modifiche successive al display:
+- Commit `bf6defd` / `55c09e5`: rimosso il comando software ST7565 `0xE2`, non ammesso dal requisito di reset hardware tramite RES.
+- Test host sul commit successivo: PASS.
+- La nuova build ARM per il commit sorgente `55c09e5` e per il ramo aggiornato `2fbe97b` è in corso; finché non termina non attribuire a questi commit l'esito ARM SUCCESS.
 
-Test host con `gcc -std=c11 -Wall -Wextra -Werror`:
-- BK4829 adapter: PASS (tuning 0x38/0x39/0x30, RSSI 9 bit, glitch wait, bus read non valido, limiti banda)
-- DSP no-cascade/Waterfall: PASS (median, picco isolato, assenza propagazione laterale, Waterfall disabilitato senza scritture)
-- Sweep mapping: PASS (coarse/fine, mask validi, span ridotto e range non valido)
-- Guardia AFC e static check: PASS (nessuna falsa tripla coerenza, nessuna EMA live, median snapshot obbligatorio)
-- Calibrazione DC: PASS (offset default, saturazione negativa, limiti indice)
+## Pinout documentato
 
-Metriche riportate dal linker:
-- FLASH: 6.488 byte su 96 KiB (6,60%)
-- RAM `.data + .bss`: 6.064 byte su 16 KiB (37,01%)
-- `text`: 6.484 byte
-- `data`: 4 byte
-- `bss`: 6.060 byte
-- stack riservato dal linker: 1.536 byte
-- RAM residua dopo `.data/.bss` e riserva stack: 8.784 byte
-- BIN raw: 6.488 byte
+- RF: PB8=SCK, PB9=SDIO bidirezionale, PF9=SCN/CSN.
+- ST7565: PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS.
+- Fonte: driver target UV-K1 upstream `App/driver/bk4829.c`, `App/driver/st7565.c`, e audit `docs/UPSTREAM_PINOUT_VERIFICATION.md`.
+- I bus RF e LCD sono separati. La mappa fisica della singola revisione PCB richiede ancora verifica elettrica.
 
-Artefatto GitHub Actions:
-- Nome: `uv-k1-v3-spectrum-build`
-- ID: `14284523376`
-- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985515540/artifacts/14284523376)
+## Driver BK4829
 
-## Warning
+- Sequenza init basata sul file target UV-K1 `App/driver/bk4829.c`, commit upstream `3261ca7883d5b0b60c0905d8766612dee7b4191d`, funzione `BK4819_Init()`, righe 100–201.
+- REG 0x19 = 0x1041, fonte: stesso file, riga 186.
+- AFC disable: REG 0x73 bit 4; la sequenza scrive 0x4691, bit 4 impostato. `bk4829_read_afc()` restituisce 0 neutro; `bk4829_afc_is_valid()` restituisce 0. Il DSP non usa la misura AFC e la pipeline non abilita la tripla coerenza basata su AFC.
+- Il dump stock 7.03.01 verificato ha SHA-256 `55ec0daffc5668bdb41dcc118475d7e6e23ad953d70f57a9bca64a6202734ba0`. La ricerca byte-level non ha dimostrato autonomamente la scrittura REG 0x19; quel valore è documentato dal sorgente F4HWN, non spacciato per disassemblaggio stock.
+- Licenza upstream registrata: Apache-2.0; implementazione locale indipendente e inventario delle fonti in `docs/BK4829_REGISTER_EVIDENCE.md`.
 
-Nessun warning del compilatore C è stato riportato nella build. I warning di Node.js mostrati dal runner riguardano le action di GitHub e non il firmware.
+## Display e rendering
 
-## Funzioni incluse nella build
+Implementati:
+- framebuffer ST7565 128x64, 1.024 byte, 8 pagine;
+- blit completo di 1.024 byte;
+- font 5x7 per frequenza, span e RBW;
+- barre spettro live e Peak Hold separato;
+- waterfall 16 righe con dithering Bayer 4x4;
+- frame pacing nominale di 67 ms (circa 15 fps), subordinato al clock reale.
 
-- Moduli DSP e stabilizzatore integrati; la traccia live copia direttamente lo sweep corrente e non usa `sweep_average`, evitando cross-fade. Il median3 lavora su snapshot compatto dei soli campioni validi, evitando cascata in-place e non filtrando buchi coarse come RSSI zero. L'adattatore d'uscita mantiene il dominio 0..127 richiesto dall'interfaccia `int8_t` della reiezione spurie.
-- Framebuffer ST7565 128x64 da 1.024 byte, font 5x7, rendering live, Peak Hold separato e Waterfall 16 livelli con dithering 4x4.
-- Trasporto display bit-bang SPI mode 3, pin PA5/PA6/PA7/PB2, offset colonna +4, sequenza di init derivata come riferimento dal driver upstream K1 e reimplementata autonomamente.
-- Aggiornamento display limitato con pausa minima di 67 ms, dipendente dal clock core di riferimento 8 MHz.
-- Sweep adattivo: campioni mappati sui bin corrispondenti alla frequenza reale, con mask validi per la scansione coarse; i bin non misurati restano esplicitamente vuoti.
-- Bus RF 3-wire BK4829 predisposto su PB8/PB9/PF9; turnaround tNXT=1 us dal datasheet, sintonia con REG 0x38/0x39/0x30, polling glitch REG 0x63 e lettura RSSI grezza REG 0x67, adattati da riferimenti software K1.
-- Guardia di sintonia: accetta soltanto le bande BK4829 documentate 18-580 MHz e 760-1160 MHz.
-- Calibrazione DC in RAM con aritmetica allargata e protezione limiti; offset predefiniti a zero.
+**TODO hardware bloccante:** il pin fisico RES non è identificato nelle fonti disponibili. Il comando software E2 è stato rimosso; senza un impulso hardware RES l'inizializzazione del controller non è garantita. Individuare RES su schema/PCB della revisione esatta e integrarlo solo con evidenza del pin.
 
-## Limiti funzionali: non è un firmware pronto per la radio
+## Linker e memoria
 
-La build e i test host provano la compilabilità e il comportamento software isolato, non il funzionamento fisico. In particolare:
-- Il display ST7565 è compilato, ma non è stato testato sul pannello reale; contrasto, orientamento, timing e refresh richiedono verifica sulla specifica revisione PCB.
-- Il driver BK4829 non è completo: la sequenza di init RF resta TODO; `bk4829_read_afc()` resta TODO e restituisce placeholder 0. Il gate `bk4829_afc_is_valid()` resta falso: la pipeline bypassa la reiezione spurie finché l'AFC non è verificato, evitando di simulare una tripla coerenza con AFC=0. Le letture/tuning derivano da sorgenti K1 che mantengono nomi BK4819 e devono essere confermate sul dump stock 7.03.01.
-- `bk4829_init()` conserva REG 0x30 solo se la lettura è valida; non inizializza i registri RF.
-- Il bus 3-wire è implementato secondo datasheet e sorgenti K1, ma non è stato verificato con logic analyzer sulla radio.
-- La scansione keypad Fn1/Fn2/F-Lock non è implementata: i GPIO sono predisposti, gli eventi UI restano TODO.
-- `calib_load()` usa ancora offset a zero; lettura/scrittura flash della calibrazione non implementate.
-- Il clock core viene assunto a 8 MHz per i delay; va confermato che il bootloader 7.03.01 non lo riconfiguri prima del salto all'app.
-- L'immagine prodotta è un BIN ARM raw, non un pacchetto DFU Quansheng verificato.
-- Nessun test di avvio, ricezione, display o RF è stato eseguito sulla radio.
+- FLASH applicazione: 0x08002800, limite prudenziale immagine 96 KiB.
+- RAM: 0x20000000, 16 KiB.
+- Stack riservato: 1.536 byte.
+- Offset 0x08002800 deriva dal linker upstream UV-K1; non dimostra che un raw BIN sia un pacchetto DFU valido.
 
-## Gate prima del flash
+## Limiti e sicurezza
 
-1. Ottenere e conservare il dump stock completo UV-K1 bootloader 7.03.01, inclusa la calibrazione.
-2. Verificare formato di aggiornamento, offset e tabella vettori rispetto al bootloader installato. `0x08002800` è il riferimento upstream del progetto, non autorizza da solo il flash di un raw BIN.
-3. Confermare la revisione PCB e i pin reali; il riferimento software K1 usa RF PB8/PB9/PF9 e LCD PA5/PA6/PA7/PB2.
-4. Verificare init, sintonia, RSSI e AFC BK4829 tramite dump stock o misura controllata. Non assumere equivalenza BK4819 e non scrivere registri non verificati.
-5. Testare il rendering ST7565 sul pannello reale e misurare refresh e clock effettivo.
-6. Definire un'area calibrazione sicura e non sovrapposta a bootloader, applicazione o dati radio prima di implementare flash write.
-7. Completare la scansione keypad e prove hardware di sensibilità, spurie, no-cascade e fedeltà della traccia live.
-8. Validare il contenitore/DFU con il tool appropriato e mantenere il backup stock per il ripristino.
-
-## Regola di rilascio
-
-Il BIN raw da 6.488 byte è un artefatto di compilazione sperimentale e NON deve essere flashato sulla radio. Nessun file sarà etichettato come flashabile finché tutti i gate hardware, RF, display e bootloader non saranno superati.
+- Nessuna prova elettrica, RF o display eseguita sulla radio fisica.
+- Clock core assunto 8 MHz per SysTick; da verificare sul target.
+- Keypad event scan ancora TODO.
+- Backup calibrazione/configurazione obbligatorio prima di qualsiasi flash.
+- Il raw BIN non va flashato direttamente né rinominato come DFU. Prima verificare formato immagine, bootloader, vettori e strumento DFU compatibile.
+- Non definire il firmware pronto all'uso finché RES, pinout della scheda, RF, bootloader e ripristino calibrazione non sono stati verificati su hardware.
