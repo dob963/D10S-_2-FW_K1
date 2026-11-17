@@ -120,7 +120,7 @@ Il precedente confronto a 280 MHz era un errore di fattore 10 ed è stato corret
 
 Il confronto del bus seriale con `BK4819_ReadU16()`, `BK4819_WriteU8()`, `BK4819_WriteU16()`, `BK4819_ReadRegister()` e `BK4819_WriteRegister()` ha inoltre portato a correggere:
 - campionamento SDA nella fase SCL bassa, prima del fronte di salita;
-- temporizzazione `SHORT_DELAY()` di 35 NOP per ciascuna fase;
+- ritardo software locale di circa 35–45 cicli per ciascuna fase, in linea con il timing del driver di riferimento;
 - sequenza CS/SCL di inizio e fine transazione e ripristino SDA/SCL.
 
 Queste sono correzioni della temporizzazione e della selezione del ramo RF basate sul driver di riferimento; non certificano il marking del chip, la compatibilità elettrica o il funzionamento sul PCB specifico.
