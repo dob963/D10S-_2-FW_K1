@@ -121,7 +121,11 @@ void ui_spectrum_set_info(uint32_t center,uint32_t span,uint32_t rbw)
     center_hz=center; span_hz=span; rbw_hz=rbw; clamp_center_to_span();
 }
 void ui_spectrum_set_detection(uint32_t frequency,uint8_t level,uint8_t noise_floor)
-{ detected_frequency=frequency; detected_level=level; detected_noise=noise_floor; }
+{
+    detected_noise=noise_floor;
+    if(frequency) { detected_frequency=frequency; detected_level=level; }
+    else if(!peak_hold) { detected_frequency=0u; detected_level=0u; }
+}
 void ui_spectrum_get_range(uint32_t *start,uint32_t *stop)
 {
     uint32_t half=span_hz/2u;
@@ -220,6 +224,7 @@ void ui_spectrum_handle(void)
         break;
     case KEY_STAR:
         for(int i=0;i<SPEC_BINS;++i) peak[i]=0;
+        detected_frequency=0u; detected_level=0u;
         break;
     case KEY_SIDE1:
         if(span_index>0u) --span_index;
