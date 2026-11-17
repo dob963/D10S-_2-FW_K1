@@ -92,7 +92,11 @@ int main(void)
     regs[0x30] = 0xFFFFu;
     bk4829_init();
     bk4829_set_freq(146000000u);
+    bk4829_wait_settle();
+    assert(bk4829_read_rssi() == 0);
     assert(write_count == 0u);
+    assert(glitch_reads == 0u);
+    assert(rssi_reads == 0u);
 
     /* Frequenze fuori dalle bande dichiarate dal datasheet: nessuna scrittura. */
     reset_logs();
