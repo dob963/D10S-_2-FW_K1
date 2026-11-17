@@ -10,7 +10,7 @@
 #include "st7565.h"
 
 static int16_t spec_raw[SPEC_BINS], spec_avg[SPEC_BINS];
-static int16_t spec_med_in[SPEC_BINS];
+static int16_t afc_raw[SPEC_BINS];
 static uint8_t spec_valid[SPEC_BINS];
 static int8_t spec_clean[SPEC_BINS], spec_stable[SPEC_BINS];
 static stabilizer_t stab;
@@ -21,15 +21,14 @@ int main(void)
     calib_load();
     stabilizer_init(&stab);
     ui_spectrum_init();
-    ui_spectrum_set_info(146000000u, 4000000u,
-                         4000000u / (SPEC_BINS - 1u));
+    ui_spectrum_set_info(146000000u, 4000000u, 0u);
 
     /* Banda iniziale; la UI di configurazione non è ancora implementata. */
     const uint32_t f_start = 144000000u;
     const uint32_t f_stop  = 148000000u;
 
     for (;;) {
-        sweep_adaptive(f_start, f_stop, spec_raw, spec_med_in, spec_valid);
+        sweep_adaptive(f_start, f_stop, spec_raw, afc_raw, spec_valid);
 
         /* Tutti i bin sono misurati dallo sweep uniforme. La mediana usa
          * i tre bin adiacenti reali, senza compattare indici né creare
