@@ -3,10 +3,7 @@
 #include "st7565.h"
 #include <stdint.h>
 
-/* PY32F071: indirizzi dal Reference Manual Puya PY32F07X.
- * GPIOA=0x50000000, GPIOB=0x50000400, GPIOF=0x50001400.
- * RCC=0x40021000; RCC_IOPENR offset 0x34, GPIOA/B/F enable bit 0/1/5.
- */
+/* PY32F071 register map. */
 #define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define RCC_IOPENR REG32(0x40021034u)
 #define GPIOA_BASE 0x50000000u
@@ -14,26 +11,21 @@
 #define GPIOF_BASE 0x50001400u
 #define GPIO_MODER(base) REG32((base) + 0x00u)
 #define GPIO_OTYPER(base) REG32((base) + 0x04u)
-#define GPIO_OSPEEDR(base) REG32((base) + 0x08u)
 #define GPIO_PUPDR(base) REG32((base) + 0x0Cu)
 #define GPIO_IDR(base) REG32((base) + 0x10u)
 #define GPIO_BSRR(base) REG32((base) + 0x18u)
 
-#define RF_SCK_PIN 8u       /* PB8: BK4829 SCK */
-#define RF_SDIO_PIN 9u      /* PB9: BK4829 SDATA bidirezionale */
-#define RF_SCN_PIN 9u       /* PF9: BK4829 SCN/CSN */
-
-#define LCD_SCK_PIN 5u      /* PA5: ST7565 SCK */
-#define LCD_A0_PIN 6u       /* PA6: ST7565 A0 */
-#define LCD_MOSI_PIN 7u     /* PA7: ST7565 SDA */
-#define LCD_CS_PIN 2u       /* PB2: ST7565 CS */
+#define RF_SCK_PIN 8u
+#define RF_SDIO_PIN 9u
+#define RF_SCN_PIN 9u
+#define LCD_SCK_PIN 5u
+#define LCD_A0_PIN 6u
+#define LCD_MOSI_PIN 7u
+#define LCD_CS_PIN 2u
 
 #ifndef HW_CORE_CLOCK_HZ
-/* Valore prudenziale richiesto dal progetto; verificare il clock effettivo
- * lasciato dal bootloader prima di usare delay temporali come misura RF. */
 #define HW_CORE_CLOCK_HZ 8000000u
 #endif
-
 #define SYST_CSR REG32(0xE000E010u)
 #define SYST_RVR REG32(0xE000E014u)
 #define SYST_CVR REG32(0xE000E018u)
@@ -45,8 +37,7 @@ static void pin_mode(uint32_t base, uint32_t pin, uint32_t mode)
 {
     uint32_t shift = pin * 2u;
     uint32_t v = GPIO_MODER(base);
-    v &= ~(3u << shift);
-    v |= ((mode & 3u) << shift);
+    v = (v & ~(3u << shift)) | ((mode & 3u) << shift);
     GPIO_MODER(base) = v;
 }
 
@@ -94,8 +85,6 @@ static uint32_t rf_read_bit(void)
 
 void delay_us(uint32_t us)
 {
-    /* SysTick con clock core di riferimento 8 MHz. Il valore deve essere
-     * riallineato se la configurazione clock effettiva viene modificata. */
     const uint32_t ticks_per_us = HW_CORE_CLOCK_HZ / 1000000u;
     if (ticks_per_us == 0u || ticks_per_us > 0x01000000u) return;
     SYST_CSR = 0u;
@@ -110,8 +99,6 @@ void delay_us(uint32_t us)
 
 void delay_ms(uint32_t ms)
 {
-    /* SysTick con clock core: nessun loop calibrato a numero di NOP.
-     * Il clock va confermato sul target; timeout se reload non rappresentabile. */
     const uint32_t ticks_per_ms = HW_CORE_CLOCK_HZ / 1000u;
     if (ticks_per_ms == 0u || ticks_per_ms > 0x01000000u) return;
     SYST_CSR = 0u;
@@ -130,9 +117,6 @@ void bk_spi_write(uint8_t reg, uint16_t value)
     reg &= 0x7Fu;
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
-    /* BK4829 3-wire: R/W + A6..A0 + D15..D0, MSB first.
-     * R/W=0 write, fonte K1 App/driver/bk4829.c righe 273-275.
-     * Il datasheet BK4829 conferma latch sul fronte SCK crescente. */
     rf_send_bit(0u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     for (bit = 15; bit >= 0; --bit) rf_send_bit((value >> bit) & 1u);
@@ -146,25 +130,35 @@ uint16_t bk_spi_read(uint8_t reg)
     reg &= 0x7Fu;
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
-    /* R/W=1 read, fonte K1 App/driver/bk4829.c righe 237-239. */
     rf_send_bit(1u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     rf_sdio_input();
-    /* Turnaround del bus: il datasheet mostra il passaggio MCU->BK4829
-     * dopo l'indirizzo; tNXT minimo 1 us. */
-    delay_us(1u); /* BK4829 datasheet: tNXT minimo 1 us */
+    delay_us(1u);
     for (bit = 15; bit >= 0; --bit)
         value = (uint16_t)((value << 1) | rf_read_bit());
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
     return value;
 }
 
+/* UV-K1 keypad: four active-low scan columns PB6..PB3 and rows PB15..PB12.
+ * Side keys are sensed with all columns high (the upstream matrix's column 0).
+ */
+void keypad_drive_columns(uint8_t low_column)
+{
+    static const uint8_t pins[4] = {6u, 5u, 4u, 3u};
+    for (unsigned i = 0; i < 4u; ++i) pin_write(GPIOB_BASE, pins[i], 1u);
+    if (low_column < 4u) pin_write(GPIOB_BASE, pins[low_column], 0u);
+}
+
+uint8_t keypad_read_rows(void)
+{
+    return (uint8_t)((~(GPIO_IDR(GPIOB_BASE) >> 12u)) & 0x0Fu);
+}
+
 void hw_init(void)
 {
-    /* Clock I/O GPIOA, GPIOB e GPIOF: RCC_IOPENR bit 0,1,5. */
     RCC_IOPENR |= (1u << 0) | (1u << 1) | (1u << 5);
 
-    /* BK4829 su PB8/PB9/PF9: pinout UV-K1 V3 documentato. */
     pin_mode(GPIOB_BASE, RF_SCK_PIN, 1u);
     pin_mode(GPIOB_BASE, RF_SDIO_PIN, 1u);
     pin_mode(GPIOF_BASE, RF_SCN_PIN, 1u);
@@ -172,7 +166,6 @@ void hw_init(void)
     pin_write(GPIOB_BASE, RF_SDIO_PIN, 0u);
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
 
-    /* ST7565: PA5 SCK, PA7 MOSI, PA6 A0, PB2 CS. */
     pin_mode(GPIOA_BASE, LCD_SCK_PIN, 1u);
     pin_mode(GPIOA_BASE, LCD_MOSI_PIN, 1u);
     pin_mode(GPIOA_BASE, LCD_A0_PIN, 1u);
@@ -182,18 +175,21 @@ void hw_init(void)
     pin_write(GPIOA_BASE, LCD_A0_PIN, 0u);
     pin_write(GPIOB_BASE, LCD_CS_PIN, 1u);
 
-    /* Keypad matrix PB3..PB6 / PB12..PB15: predisposizione input
-     * con pull-up; la scansione e la polarita' restano nel driver keypad. */
+    /* Correct matrix direction: columns are driven outputs, rows are
+     * pulled-up inputs. PTT PB10 is also an active-low pulled-up input. */
     for (uint32_t p = 3u; p <= 6u; ++p) {
-        pin_mode(GPIOB_BASE, p, 0u);
-        GPIO_PUPDR(GPIOB_BASE) =
-            (GPIO_PUPDR(GPIOB_BASE) & ~(3u << (p * 2u))) | (1u << (p * 2u));
+        pin_mode(GPIOB_BASE, p, 1u);
+        GPIO_PUPDR(GPIOB_BASE) &= ~(3u << (p * 2u));
     }
     for (uint32_t p = 12u; p <= 15u; ++p) {
         pin_mode(GPIOB_BASE, p, 0u);
         GPIO_PUPDR(GPIOB_BASE) =
             (GPIO_PUPDR(GPIOB_BASE) & ~(3u << (p * 2u))) | (1u << (p * 2u));
     }
+    pin_mode(GPIOB_BASE, 10u, 0u);
+    GPIO_PUPDR(GPIOB_BASE) =
+        (GPIO_PUPDR(GPIOB_BASE) & ~(3u << 20u)) | (1u << 20u);
+    keypad_drive_columns(0xFFu);
 
     bk4829_init();
     st7565_init();
