@@ -46,7 +46,7 @@ Nel driver indipendente `src/bk4829_drv.c` sono stati adattati, con commenti fon
 - lettura RSSI grezza da REG 0x67 con maschera 0x01FF, come nel file upstream `App/driver/bk4829.c`;
 - attesa PLL limitata tramite REG 0x63 (soglia 200, massimo 50 letture) e scarto della prima lettura RSSI dopo la risintonia; il turnaround 3-wire è stato ridotto al minimo documentato tNXT=1 us dal datasheet.
 
-Non sono state importate sequenze di init o mappe complete. `bk4829_init()` conserva solo il controllo REG 0x30 in modo non distruttivo; la sequenza di init completa resta TODO. `bk4829_read_afc()` resta TODO perché il fork documenta il bit di abilitazione AFC in REG 0x73 ma non espone un getter affidabile del valore AFC. Il bus SPI usa ora il turnaround minimo tNXT=1 us indicato dal datasheet BK4829; clock effettivo e forme d'onda devono ancora essere verificati con logic analyzer e confronto dump stock.
+Non sono state importate sequenze di init o mappe complete. `bk4829_init()` conserva solo il controllo REG 0x30 in modo non distruttivo; la sequenza di init completa resta TODO. `bk4829_read_afc()` resta TODO perché il fork principale non espone un getter affidabile. La pipeline controlla `bk4829_afc_is_valid()` e bypassa la reiezione spurie finché AFC non è verificato, evitando di trattare un valore costante 0 come terza coerenza. Il bus SPI usa ora il turnaround minimo tNXT=1 us indicato dal datasheet BK4829; clock effettivo e forme d'onda devono ancora essere verificati con logic analyzer e confronto dump stock.
 
 ## Design decisions for D10S
 
