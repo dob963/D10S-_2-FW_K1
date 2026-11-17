@@ -1,6 +1,7 @@
 #include "agc_sw.h"
 #include "spur_reject.h"
 #include "sweep_engine.h"
+#include "bk4829_drv.h"
 #include "median3.h"
 #include "waterfall.h"
 #include "ui_spectrum.h"
