@@ -3,14 +3,19 @@
 Data: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Commit aggiornato: `9c040fedaec80ec1f8f06538ebf76dc2db80d04a` (build CI in corso al momento dell'aggiornamento)
+Commit compilato e verificato: `258194824b2c7b4dece78a84190de7d960e521f1`
 
 ## Esito CI
 
-**SUCCESS per il commit precedente** — GitHub Actions run #147:
-https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44047482312
+**SUCCESS** — GitHub Actions run #178:
+https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44048608935
 
-Il commit `b0bc0791e0df43f7f049f0af32d710766f7756dc` ha superato tutti gli step. La nuova build con keypad e peak tracker è in verifica CI separata.
+Tutti gli step sono terminati con esito SUCCESS sul commit `258194824b2c7b4dece78a84190de7d960e521f1`:
+- test BK4829 adapter;
+- test DSP no-cascade e isolamento Waterfall;
+- test mapping sweep;
+- test noise floor, conferma picchi e interpolazione;
+- compilazione ARM GCC e upload artefatti.
 - test host BK4829, inclusa selezione LNA VHF/UHF;
 - test DSP no-cascade e isolamento Waterfall;
 - test sweep uniforme, copertura completa e mapping frequenza;
@@ -21,15 +26,16 @@ Il commit `b0bc0791e0df43f7f049f0af32d710766f7756dc` ha superato tutti gli step.
 ## Artefatti
 
 Artefatto GitHub Actions: `uv-k1-v3-spectrum-build`  
-ID: `14312066975`  
-Dimensione archivio ZIP: 22.851 byte  
+ID: `14311639205`  
+Dimensione archivio ZIP: 30.840 byte  
 Scadenza indicata da GitHub: 2027-02-15  
-SHA-256 BIN: `bf4fcd2adb922b3d799c4899aac682c06ae4cc2221381b73eb12673203d1a58e`
+SHA-256 ZIP: `e6b877c69af0ffb876875edc2078f5d8b76ea6ccfa0aa33f8aa02c92f7050463`  
+SHA-256 BIN: `c02a561d4383d7356c84abc18f5f13ae4e8b42cbd6ee02648ee5f20f91218686`
 
 Contenuti:
-- `spectrum_k1_v3.bin`: 6.168 byte
-- `spectrum_k1_v3.elf`: 85.020 byte
-- `spectrum_k1_v3.map`: 39.245 byte
+- `spectrum_k1_v3.bin`: 8.624 byte
+- `spectrum_k1_v3.elf`: 93.732 byte
+- `spectrum_k1_v3.map`: 48.770 byte
 
 Il BIN è un'immagine ARM raw all'offset applicativo previsto dal linker. **Non è un contenitore DFU Quansheng** e non va rinominato come DFU.
 
@@ -37,11 +43,11 @@ Il BIN è un'immagine ARM raw all'offset applicativo previsto dal linker. **Non 
 
 Dalla mappa linker:
 - FLASH vettori: 192 byte
-- `.text`: 5.604 byte
-- `.rodata`: 360 byte
-- `.data`: 4 byte
-- `.bss`: 4.880 byte
-- fine `.bss`: `0x20001314`
+- `.text`: 7.932 byte
+- `.rodata`: 484 byte
+- `.data`: 8 byte
+- `.bss`: 5.036 byte
+- fine `.bss`: `0x200013B4`
 - limite inferiore stack riservato: `0x20003A00`
 - stack riservato: 1.536 byte
 
@@ -72,4 +78,4 @@ La build e i test host dimostrano la compilabilità e il comportamento dei modul
 - Calibrazione: nessuna area flash viene modificata; backup e layout devono essere verificati prima del flash.
 - Packaging: raw BIN non equivale a DFU; occorre validare il flusso di flashing e il recovery per il target effettivo.
 
-**Decisione:** il commit precedente è compilato e testato. Il commit aggiornato è in verifica CI; nessuna prova radio o flash è stata eseguita. Non dichiarare il firmware pronto per il flash finché i blocchi hardware/bootloader sopra elencati non sono chiusi.
+**Decisione:** build e test automatici superati sul commit indicato. Vettore iniziale, indirizzo Reset_Handler e assert RAM/stack sono stati controllati staticamente nell'artefatto. Nessuna prova radio o flash è stata eseguita; i blocchi hardware/bootloader sopra elencati restano aperti.
