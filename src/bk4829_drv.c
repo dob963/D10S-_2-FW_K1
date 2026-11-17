@@ -107,6 +107,13 @@ void bk4829_set_freq(uint32_t freq_hz)
 
     uint32_t f10 = freq_hz / 10u;
 
+    if (!scan_ctrl_valid) {
+        uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
+        if (raw_ctrl == 0xFFFFu) return;
+        scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
+        scan_ctrl_valid = 1u;
+    }
+
     /* Selezione del ramo RF esterno: GPIO4 abilita VHF LNA (<280 MHz),
      * GPIO3 abilita UHF LNA (>=280 MHz). Il BK4829 usa REG_33 con
      * maschera 0x40>>GPIO_number; preserviamo tutti gli altri bit.
@@ -119,13 +126,6 @@ void bk4829_set_freq(uint32_t freq_hz)
     if (next_gpio != rf_gpio_state) {
         bk_spi_write(0x33u, next_gpio);
         rf_gpio_state = next_gpio;
-    }
-
-    if (!scan_ctrl_valid) {
-        uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
-        if (raw_ctrl == 0xFFFFu) return;
-        scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
-        scan_ctrl_valid = 1u;
     }
 
     /* Fonte K1 Spectrum3D: scrittura split 32 bit su 0x38/0x39,
