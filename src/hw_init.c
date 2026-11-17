@@ -143,16 +143,11 @@ uint16_t bk_spi_read(uint8_t reg)
 /* UV-K1 keypad: four active-low scan columns PB6..PB3 and rows PB15..PB12.
  * Side keys are sensed with all columns high (the upstream matrix's column 0).
  */
-void keypad_drive_columns(uint8_t low_column)
+static void keypad_drive_columns(uint8_t low_column)
 {
     static const uint8_t pins[4] = {6u, 5u, 4u, 3u};
     for (unsigned i = 0; i < 4u; ++i) pin_write(GPIOB_BASE, pins[i], 1u);
     if (low_column < 4u) pin_write(GPIOB_BASE, pins[low_column], 0u);
-}
-
-uint8_t keypad_read_rows(void)
-{
-    return (uint8_t)((~(GPIO_IDR(GPIOB_BASE) >> 12u)) & 0x0Fu);
 }
 
 void hw_init(void)
