@@ -61,7 +61,7 @@ int main(void)
     reset_logs();
     regs[0x30] = 0xA345u;
     bk4829_init();
-    assert(write_count == 54u);
+    assert(write_count == 55u);
     assert(write_regs[0] == 0x00u && write_values[0] == 0x8000u);
     assert(write_regs[1] == 0x00u && write_values[1] == 0x0000u);
     assert(write_regs[21] == 0x19u && write_values[21] == 0x1041u);
@@ -72,6 +72,7 @@ int main(void)
     assert(write_regs[51] == 0x37u && write_values[51] == 0x9F1Fu);
     assert(write_regs[52] == 0x30u && write_values[52] == 0u);
     assert(write_regs[53] == 0x30u && write_values[53] == 0xBFF1u);
+    assert(write_regs[54] == 0x43u && write_values[54] == 0x3028u);
 
     /* Retune 146 MHz: soglia upstream 28 MHz => UHF LNA GPIO3. */
     reset_logs();
