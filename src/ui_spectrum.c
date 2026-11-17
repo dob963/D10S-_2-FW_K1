@@ -49,7 +49,9 @@ static void select_column(unsigned col)
 }
 static uint8_t read_rows(void)
 {
-    return (uint8_t)((~(GPIOB_IDR >> 12u)) & 0x0Fu);
+    uint8_t raw=(uint8_t)((~(GPIOB_IDR >> 12u)) & 0x0Fu);
+    /* Row 0 is PB15, row 3 is PB12 in the UV-K1 matrix. */
+    return (uint8_t)(((raw&0x01u)<<3)|((raw&0x02u)<<1)|((raw&0x04u)>>1)|((raw&0x08u)>>3));
 }
 static int decode_key(unsigned col, unsigned row)
 {
