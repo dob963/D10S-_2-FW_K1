@@ -115,3 +115,10 @@ int16_t bk4829_read_afc(void)
      */
     return 0;
 }
+
+
+int bk4829_afc_is_valid(void)
+{
+    /* TODO: abilitare solo dopo conferma REG 0x6D e scala sul dump stock. */
+    return 0;
+}
