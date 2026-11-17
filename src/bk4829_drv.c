@@ -91,6 +91,9 @@ void bk4829_init(void)
     bk_spi_write(0x37u, 0x9F1Fu);
     bk_spi_write(BK_REG_CTRL, 0u);
     bk_spi_write(BK_REG_CTRL, 0xBFF1u);
+    /* Filtro RX wide 25 kHz: REG43=0x3028 (codifica documentata
+     * nel driver UV-K1; necessario non dipendere dal VFO del bootloader). */
+    bk_spi_write(0x43u, 0x3028u);
 
     /* Conserva la configurazione RX e disabilita solo l'AF DAC durante
      * la scansione, come fa Spectrum3D nel firmware UV-K1 upstream. */
