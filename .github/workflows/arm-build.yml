@@ -21,6 +21,7 @@ jobs:
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_dsp_no_cascade.c src/stabilizer.c src/median3.c src/waterfall.c src/calib.c -o build/test_dsp_no_cascade
           ./build/test_dsp_no_cascade
+          if grep -q 'sweep_average(spec_raw' src/main.c; then echo 'Cross-sweep averaging is forbidden in live trace'; exit 1; fi
       - name: Install ARM GCC
         run: |
           sudo apt-get update
