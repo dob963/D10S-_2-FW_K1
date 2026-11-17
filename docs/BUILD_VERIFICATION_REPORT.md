@@ -5,17 +5,14 @@ Repository: `dob963/D10S-_2-FW_K1`, branch `main`
 
 ## Stato build
 
-Ultima build ARM completata con esito SUCCESS:
-- Run: https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44040415949
-- Commit compilato: `4b8fd0b34d61105bf0fe8974df2a9a6fbf384f33`
+Ultima build ARM del codice renderer/RF completata con esito SUCCESS:
+- Run: https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44041340931
+- Commit compilato: `2fbe97b897b2b56057c369dba24dd44654c735ec`
 - Toolchain: `arm-none-eabi-gcc`, `-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft`
 - Test host BK4829, DSP/no-cascade/waterfall e sweep: PASS
-- Dimensione riportata dal job: raw BIN 6.692 byte; RAM statica 6.064 byte (da log del job).
+- Dimensione artefatto verificata: raw BIN 6.688 byte; `.data` 4 byte + `.bss` 6.060 byte = 6.064 byte RAM. Mappa linker: `_ebss=0x200017B0`, limite stack `0x20003A00`, stack riservato 1.536 byte.
 
-Modifiche successive al display:
-- Commit `bf6defd` / `55c09e5`: rimosso il comando software ST7565 `0xE2`, non ammesso dal requisito di reset hardware tramite RES.
-- Test host sul commit successivo: PASS.
-- La nuova build ARM per il commit sorgente `55c09e5` e per il ramo aggiornato `2fbe97b` è in corso; finché non termina non attribuire a questi commit l'esito ARM SUCCESS.
+Il commit `2fbe97b` include la rimozione del comando software ST7565 `0xE2`. La build ARM e tutti i test host sullo stesso commit sono terminati con esito SUCCESS. Il commit successivo `70c245c` aggiorna soltanto documentazione.
 
 ## Pinout documentato
 
