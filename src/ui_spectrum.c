@@ -27,7 +27,7 @@ static uint8_t stable_count;
 static const uint32_t min_center = 144000000u;
 static const uint32_t max_center = 148000000u;
 static const uint32_t spans[] = {500000u, 1000000u, 2000000u, 4000000u};
-static uint8_t span_index = 3u;
+static uint8_t span_index = 3u;\nstatic uint32_t detected_frequency;\nstatic uint8_t detected_level, detected_noise;
 
 /* GPIO access mirrors the verified UV-K1 matrix wiring, without importing
  * the upstream keyboard implementation. */
@@ -111,7 +111,7 @@ void ui_spectrum_set_info(uint32_t center,uint32_t span,uint32_t rbw)
 {
     center_hz=center; span_hz=span; rbw_hz=rbw;
 }
-void ui_spectrum_get_range(uint32_t *start,uint32_t *stop)
+void ui_spectrum_set_detection(uint32_t frequency,uint8_t level,uint8_t noise_floor)\n{ detected_frequency=frequency; detected_level=level; detected_noise=noise_floor; }\nvoid ui_spectrum_get_range(uint32_t *start,uint32_t *stop)
 {
     uint32_t half=span_hz/2u;
     uint32_t lo=center_hz-half, hi=center_hz+half;
@@ -136,7 +136,7 @@ void ui_spectrum_draw(const int8_t *spec,int n)
     char rbwline[12]={'R','B','W',' ',0,0,0,'K','H','z',0,0};
     if(!rbw_hz) {rbwline[4]='-';rbwline[5]='-';rbwline[6]='-';}
     else put3(rbwline+4,rbw_k);
-    st7565_draw_text(0,8,rbwline);
+    st7565_draw_text(0,8,rbwline);\n    char detline[24]={'N','F',' ',0,0,0,' ','P','K',' ',0,0,0,'.',0,0,0,0,0,0,0,0,0};\n    put3(detline+3,detected_noise);\n    if(detected_frequency){uint32_t mhz=detected_frequency/1000000u,frac=(detected_frequency%1000000u)/1000u;put3(detline+10,mhz);put3(detline+14,frac);}\n    else{detline[10]='-';detline[11]='-';detline[12]='-';detline[14]='-';detline[15]='-';detline[16]='-';}\n    (void)detected_level; st7565_draw_text(0,16,detline);
     int max_bin=0,max_val=-1;
     for(int i=0;i<n;++i) {
         int live=spec[i]<0?0:spec[i]; if(live>127) live=127;
