@@ -3,9 +3,9 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Ultima build ARM completata: [43985151117](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985151117)  
-Commit build: `edfb12d97d90ba9b5165995578b148b6cfb77492`  
-La successiva estensione del test host per verificare il bypass di letture RF con REG_30 invalido è PASS; la relativa ripetizione ARM è in corso.
+Ultima build ARM completata: [43985162875](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985162875)  
+Commit build: `53554edf890cadd70cdf83a14c756dc2186073c8`  
+La build include anche il test host che verifica il bypass di letture RF quando REG_30 è invalido.
 
 ## Esito compilazione e test
 
@@ -37,8 +37,8 @@ Metriche riportate dal linker:
 
 Artefatto GitHub Actions:
 - Nome: `uv-k1-v3-spectrum-build`
-- ID: `14284009093`
-- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985151117/artifacts/14284009093)
+- ID: `14285780290`
+- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985162875/artifacts/14285780290)
 
 ## Warning
 
