@@ -78,14 +78,24 @@ Per completare il dato cercare:
 2. il dump stock UV-K1 7.03.01 verificato con SHA-256 `55ec0daffc5668bdb41dcc118475d7e6e23ad953d70f57a9bca64a6202734ba0`;
 3. confronto delle letture prima/dopo variazione controllata di frequenza e modalità, su hardware con backup e strumentazione.
 
-## Dump stock: stato verifica
+## Dump stock: verifica incrociata
 
-L'URL fornito `http://armel.github.io/uvstudio/assets/factory/quansheng.k1.stock.firmware.v7.03.01.bin` è stato aperto, ma il recupero binario non è riuscito in questo ambiente; il servizio web ha restituito URL non accessibile. Di conseguenza:
-- lo SHA-256 indicato dall'utente non è stato verificato;
-- non è stata eseguita analisi byte-level delle sequenze SPI;
-- non si afferma alcuna conferma AFC dal dump.
+File ufficiale incluso nell'archivio upstream:
+`archive/quansheng.k1.stock.firmware.v7.03.01.bin`
 
-I valori di init e AFC sopra sono supportati dal sorgente V3/K1 fissato al commit indicato, non dal dump stock.
+- Repository: `armel/uv-k1-k5v3-firmware-custom`
+- Commit: `3261ca7883d5b0b60c0905d8766612dee7b4191d`
+- Dimensione: **71.268 byte**
+- SHA-256 calcolato sul contenuto binario: **`55ec0daffc5668bdb41dcc118475d7e6e23ad953d70f57a9bca64a6202734ba0`**
+- Esito: corrisponde esattamente all'hash indicato nel briefing.
+
+È stata eseguita una ricerca byte-level dei valori little-endian presenti nella sequenza di init upstream. Il dump contiene un gruppo contiguo di costanti compatibili con diversi valori usati da `BK4819_Init()` in `App/driver/bk4829.c`, concentrato circa agli offset `0xB818–0xB890`. Tra i valori trovati nel gruppo: `0x9D1F`, `0x033A`, `0x2AB2`, `0x73DC`, `0xE920`, `0x33A8`, `0x3516`, diversi coefficienti DTMF, `0xE555`, `0x4C58`, `0xC65A`, `0x94C6`, `0x4691`, `0x88EF`, `0x1822`, `0x9890`, `0x5430` e `0x61CE`.
+
+**Limite importante:** trovare una costante nel firmware compilato non prova da solo quale registro SPI la riceva. La ricerca binaria non è stata elevata a prova di sequenza di bus né è stata usata per inventare registri.
+
+Il valore `0x1041` compare una sola volta come coppia di byte little-endian all'offset `0x537`, fuori dal gruppo contiguo di costanti di init. Non è quindi una conferma byte-level indipendente della scrittura REG 0x19. La scrittura REG 0x19 = `0x1041` resta supportata dal sorgente F4HWN del driver UV-K1, riga 186, ma non è stata confermata come costante della sequenza stock.
+
+Nessun pattern AFC/AFCR è stato identificato in modo univoco nel dump. L'AFC enable/disable resta confermato dal sorgente F4HWN (REG 0x73 bit 4); la lettura offset AFC e l'eventuale scala AFCR 0-7 restano TODO.
 
 ## Pin RF
 
