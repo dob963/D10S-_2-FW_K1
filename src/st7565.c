@@ -82,18 +82,18 @@ static const uint8_t font_alpha[26][5] = {
 void st7565_init(void)
 {
     st7565_clear();
-    /* Reset ST7565 secondo il comportamento verificato nel driver
-     * target UV-K1 upstream: sul K1 non è disponibile un GPIO hardware
-     * RES utilizzabile; la routine HardwareReset upstream è un no-op.
-     * Si spegne subito il display e si invia il reset software 0xE2.
-     * Reimplementazione locale della sequenza, senza copiare il driver.
+    /* RES hardware ST7565: GPIO non ancora identificato sulla revisione
+     * PCB UV-K1 in uso. NON indovinare una porta/pin e NON sostituire il
+     * reset hardware richiesto con il comando software 0xE2.
+     * La sequenza resta deliberatamente bloccata in attesa di schema o
+     * misura di continuità del pin RES. Questo driver non è ancora pronto
+     * per essere dichiarato funzionante sul pannello fisico.
      */
     lcd_pin(0x50000418u, LCD_CS, 1);
     lcd_pin(0x50000018u, LCD_SCK, 1); /* clock idle alto: SPI mode 3 */
     lcd_pin(0x50000018u, LCD_A0, 0);
-    lcd_command(0xAEu); /* display OFF prima del reset */
-    lcd_command(0xE2u); /* ST7565 software reset */
-    delay_ms(120u);     /* tempo di recupero usato dal driver UV-K1 */
+    lcd_command(0xAEu); /* display OFF; non esegue il reset del controller */
+    delay_ms(120u);     /* attesa conservativa; non sostituisce RES hardware */
 
     /* Parametri derivati dal driver K1 ST7565 upstream:
      * App/driver/st7565.c: bias 1/9, COM normale, SEG invertito,
