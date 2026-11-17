@@ -32,19 +32,54 @@ static uint8_t scan_ctrl_valid;
 
 void bk4829_init(void)
 {
-    /* Inizializzazione non distruttiva: conserva REG_30 letto dal chip
-     * e mette in cache il profilo RX con AF DAC disabilitato.
+    /* Sequenza di init pubblicata dal fork F4HWN per UV-K1:
+     * App/driver/bk4829.c, funzione BK4819_Init(), commit
+     * 3261ca7883d5b0b60c0905d8766612dee7b4191d, righe 100-196.
      *
-     * TODO BLOCCANTE: sequenza completa di reset/init RF da dump stock
-     * UV-K1 bootloader 7.03.01. Il datasheet pubblico non contiene la
-     * tabella dei registri di configurazione.
+     * Il nome BK4819_* è legacy: il file fisico e i pin appartengono
+     * al target V3/K1. Non si importa la sequenza da bk4819.c V1/V2.
+     * La tabella qui sotto è una reimplementazione indipendente dei
+     * valori esposti dal driver UV-K1; fonte/licenza registrate nei docs.
      */
+    static const struct { uint8_t reg; uint16_t value; } init_seq[] = {
+        {0x00u, 0x8000u}, {0x00u, 0x0000u},
+        {0x37u, 0x9D1Fu}, {0x36u, 0x0022u},
+        {0x10u, 0x0318u}, {0x11u, 0x033Au},
+        {0x12u, 0x03DBu}, {0x13u, 0x03DFu},
+        {0x14u, 0x0210u}, {0x49u, 0x2AB2u},
+        {0x7Bu, 0x73DCu}, {0x7Du, 0xE920u},
+        {0x48u, 0x33A8u}, {0x40u, 0x3516u},
+        {0x1Cu, 0x07C0u}, {0x1Du, 0xE555u},
+        {0x1Eu, 0x4C58u}, {0x1Fu, 0xC65Au},
+        {0x3Eu, 0x94C6u}, {0x73u, 0x4691u},
+        {0x77u, 0x88EFu}, {0x19u, 0x1041u},
+        {0x28u, 0x0B40u}, {0x29u, 0xAA00u},
+        {0x2Au, 0x6600u}, {0x2Cu, 0x1822u},
+        {0x2Fu, 0x9890u}, {0x53u, 0x2028u},
+        {0x7Eu, 0x303Eu}, {0x46u, 0x600Au},
+        {0x4Au, 0x5430u}, {0x07u, 0x61CEu},
+        {0x33u, 0x9000u}, {0x3Fu, 0x0000u}
+    };
+    static const uint8_t dtmf_coeffs[16] = {
+        111u, 107u, 103u, 98u, 80u, 71u, 58u, 44u,
+        65u, 55u, 37u, 23u, 228u, 203u, 181u, 159u
+    };
+
+    for (unsigned i = 0u; i < sizeof(init_seq) / sizeof(init_seq[0]); ++i)
+        bk_spi_write(init_seq[i].reg, init_seq[i].value);
+
+    /* Tabella DTMF, stessa funzione/ordine del driver F4HWN bk4829.c. */
+    for (unsigned i = 0u; i < sizeof(dtmf_coeffs); ++i)
+        bk_spi_write(0x09u, (uint16_t)((i << 12) | dtmf_coeffs[i]));
+
+    /* REG_30 è configurato a runtime dal firmware UV-K1. Non inventare
+     * un valore iniziale: leggere quello presente dopo la sequenza init. */
     uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
     if (raw_ctrl != 0xFFFFu) {
         scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
         scan_ctrl_valid = 1u;
     } else {
-        scan_ctrl_valid = 0u; /* bus read non valido: non scrivere sul chip */
+        scan_ctrl_valid = 0u;
     }
 }
 
@@ -105,15 +140,30 @@ int16_t bk4829_read_rssi(void)
     return (int16_t)(raw & 0x01FFu);
 }
 
+int bk4829_set_afc_enabled(int enabled)
+{
+    /* Fonte: F4HWN App/driver/bk4819-regs.h, afcDisableRegSpec
+     * (REG 0x73, bit 4, maschera 0x0010); usato dal target UV-K1
+     * in App/radio.c e App/driver/bk4829.c.
+     * Bit=1 disabilita AFC, bit=0 abilita AFC. RMW preserva gli altri bit.
+     */
+    uint16_t value = bk_spi_read(0x73u);
+    if (value == 0xFFFFu) return 0;
+    if (enabled)
+        value = (uint16_t)(value & (uint16_t)~0x0010u);
+    else
+        value = (uint16_t)(value | 0x0010u);
+    bk_spi_write(0x73u, value);
+    return 1;
+}
+
 int16_t bk4829_read_afc(void)
 {
-    /* TODO BLOCCANTE: candidato community non verificato:
-     * fagci/k1-scaner, src/driver/bk4829.c righe 1330-1334 legge REG 0x6D
-     * come int16_t e applica 5/6 Hz per unità. Il progetto dichiara
-     * compatibilità BK4829/BK4819 e mantiene simboli BK4819_*: non è prova
-     * indipendente della codifica sul BK4829 del nostro UV-K1 V3.
-     * REG_73 è controllo/abilitazione AFC, non il valore misurato.
-     * Verificare 0x6D, segno e scala sul dump stock 7.03.01 prima dell'uso.
+    /* TODO: misura/offset AFC non deducibile dalla sola abilitazione REG 0x73.
+     * AFCR 0-7 è un indizio community (4PDA), ma nel codice F4HWN
+     * consultato non è stata trovata una lettura BK4829 con scala/segno
+     * confermati. Cercare nel dump stock 7.03.01 e in una documentazione
+     * BK4829 primaria; non usare REG 0x6D senza conferma indipendente.
      */
     return 0;
 }
