@@ -43,10 +43,11 @@ Nessun warning del compilatore C è stato riportato nella build. I warning di No
 
 ## Funzioni incluse nella build
 
-- Moduli DSP e stabilizzatore integrati; la traccia live copia direttamente lo sweep corrente e non usa `sweep_average`, evitando cross-fade tra sweep. L'adattatore d'uscita mantiene il dominio 0..127 richiesto dall'interfaccia `int8_t` della reiezione spurie.
+- Moduli DSP e stabilizzatore integrati; la traccia live copia direttamente lo sweep corrente e non usa `sweep_average`, evitando cross-fade. Il median3 lavora su snapshot compatto dei soli campioni validi, evitando cascata in-place e non filtrando buchi coarse come RSSI zero. L'adattatore d'uscita mantiene il dominio 0..127 richiesto dall'interfaccia `int8_t` della reiezione spurie.
 - Framebuffer ST7565 128x64 da 1.024 byte, font 5x7, rendering live, Peak Hold separato e Waterfall 16 livelli con dithering 4x4.
 - Trasporto display bit-bang SPI mode 3, pin PA5/PA6/PA7/PB2, offset colonna +4, sequenza di init derivata come riferimento dal driver upstream K1 e reimplementata autonomamente.
 - Aggiornamento display limitato con pausa minima di 67 ms, dipendente dal clock core di riferimento 8 MHz.
+- Sweep adattivo: campioni mappati sui bin corrispondenti alla frequenza reale, con mask validi per la scansione coarse; i bin non misurati restano esplicitamente vuoti.
 - Bus RF 3-wire BK4829 predisposto su PB8/PB9/PF9; turnaround tNXT=1 us dal datasheet, sintonia con REG 0x38/0x39/0x30, polling glitch REG 0x63 e lettura RSSI grezza REG 0x67, adattati da riferimenti software K1.
 - Guardia di sintonia: accetta soltanto le bande BK4829 documentate 18-580 MHz e 760-1160 MHz.
 - Calibrazione DC in RAM con aritmetica allargata e protezione limiti; offset predefiniti a zero.
