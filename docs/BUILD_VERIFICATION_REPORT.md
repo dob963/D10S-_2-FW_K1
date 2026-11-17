@@ -3,73 +3,67 @@
 Data: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Commit compilato e verificato: `258194824b2c7b4dece78a84190de7d960e521f1`
+Commit verificato: `ad81d3d49ff70d887e6dab92b9f8c8d1f20a9303`
 
 ## Esito CI
 
-**SUCCESS** — GitHub Actions run #178:
-https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44048608935
+**SUCCESS** — GitHub Actions run [44050742729](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44050742729).
 
-Tutti gli step sono terminati con esito SUCCESS sul commit `258194824b2c7b4dece78a84190de7d960e521f1`:
-- test BK4829 adapter;
-- test DSP no-cascade e isolamento Waterfall;
+Job `build` completato con esito SUCCESS. Step superati:
+- test host driver BK4829;
+- test DSP no-cascade e isolamento waterfall;
 - test mapping sweep;
-- test noise floor, conferma picchi e interpolazione;
-- compilazione ARM GCC e upload artefatti.
+- test regressione peak tracker;
+- installazione ARM GCC;
+- compilazione immagine applicativa raw;
+- caricamento artefatti.
 
-## Artefatti
+Questi test verificano i moduli simulati e la compilazione; non sostituiscono la prova sulla radio fisica.
 
-Artefatto GitHub Actions: `uv-k1-v3-spectrum-build`  
-ID: `14311639205`  
-Dimensione archivio ZIP: 30.840 byte  
-Scadenza indicata da GitHub: 2027-02-15  
-SHA-256 ZIP: `e6b877c69af0ffb876875edc2078f5d8b76ea6ccfa0aa33f8aa02c92f7050463`  
-SHA-256 BIN: `c02a561d4383d7356c84abc18f5f13ae4e8b42cbd6ee02648ee5f20f91218686`
+## Artefatto corrente
 
-Contenuti:
-- `spectrum_k1_v3.bin`: 8.624 byte
-- `spectrum_k1_v3.elf`: 93.732 byte
-- `spectrum_k1_v3.map`: 48.770 byte
+- Nome: `uv-k1-v3-spectrum-build`
+- ID: `14313487292`
+- SHA-256 ZIP: `2e54df616cae83b3c7211d9908c4acae59ab934567648669f55c0a48fd473e1e`
+- BIN: 8.632 byte
+- ELF: 93.680 byte
+- MAP: 48.552 byte
+- SHA-256 BIN: `b184693cd52e4e967e3a9fb67c42e82b2f0081c36da5d5c987da793ac7b5c05a`
 
-Il BIN è un'immagine ARM raw all'offset applicativo previsto dal linker. **Non è un contenitore DFU Quansheng** e non va rinominato come DFU.
+## Verifica statica immagine
 
-## Memoria
+- Target ELF: ARM 32-bit little-endian EABI5, Cortex-M0+, soft-float.
+- Origine applicazione e tabella vettori: `0x08002800`, come definito in `ld/py32f071_app.ld`.
+- Primo vettore: stack iniziale `0x20004000`, top dei 16 KiB RAM.
+- Reset vector: `0x08004775` (bit Thumb impostato); indirizzo handler `0x08004774`, interno all'immagine.
+- Fine immagine BIN: `0x080049B8`, entro il limite FLASH applicativo conservativo del linker.
+- RAM: `.bss` termina a `0x200013B4`; riserva stack 1.536 byte con limite `0x20003A00`; ASSERT linker superato.
+- Dimensione trasporto DFU: 34 pagine da 256 byte; ultima pagina con 184 byte utili, completata con padding dal protocollo.
 
-Dalla mappa linker:
-- FLASH vettori: 192 byte
-- `.text`: 7.932 byte
-- `.rodata`: 484 byte
-- `.data`: 8 byte
-- `.bss`: 5.036 byte
-- fine `.bss`: `0x200013B4`
-- limite inferiore stack riservato: `0x20003A00`
-- stack riservato: 1.536 byte
+La verifica statica dimostra coerenza strutturale di ELF/BIN e linker; non prova l'avvio del firmware sul dispositivo.
 
-La verifica ASSERT del linker per la separazione RAM/stack è passata.
+## Formato BIN e DFU
 
-## Correzioni software incluse
+Il file prodotto da `make` è un'immagine applicativa ARM raw, non un contenitore di aggiornamento vendor con intestazione/versione/CRC.
 
-1. Sweep uniforme con un campione reale per ogni bin e inclusione esatta degli estremi banda.
-2. Rimossi i buchi creati dalla scansione adattiva che saltava bin o terminava prima della fine banda.
-3. Mediana calcolata su bin realmente adiacenti, senza compattare campioni distanti.
-4. Rimosso l'AGC software che modificava il guadagno a ogni campione e falsava i rapporti d'ampiezza tra frequenze.
-5. RSSI grezzo normalizzato a una scala grafica fissa 0..127; RBW non dichiarata quando non è calibrata.
-6. Selezione del percorso RF VHF/UHF via REG 0x33: GPIO4/VHF sotto 280 MHz e GPIO3/UHF da 280 MHz, preservando gli altri bit e bloccando la scrittura se REG 0x30 non è leggibile.
-7. Aggiunto inventario di provenienza/licenze in `docs/THIRD_PARTY.md`.
-8. Corretta la direzione GPIO della matrice keypad: colonne output, righe input pull-up; implementati debounce e mappa logica UV-K1.
-9. Aggiunti controlli Spectrum: UP/DOWN centro a passi 25 kHz, MENU seleziona span 0,5/1/2/4 MHz, EXIT resetta, F commuta peak hold, STAR azzera i picchi, tasti laterali cambiano span.
-10. Aggiunto tracker DSP: noise floor percentile 20%, conferma del picco su due sweep consecutivi e interpolazione parabolica sub-bin; visualizzazione frequenza picco e noise floor.
+La documentazione e il codice pubblico di Quansheng Toolkit descrivono il flashing UV-K1 tramite protocollo DFU seriale a pagine da 256 byte e prevedono anche la selezione di un file `Custom .bin`. Quindi il fatto che il file non sia un pacchetto DFU autonomo non lo rende automaticamente incompatibile con il flusso DFU: è il programma flasher a incapsulare i byte raw nei messaggi DFU.
 
-## Blocchi ancora aperti prima della prova radio
+La stessa documentazione avverte che i BIN personalizzati non ricevono la stessa garanzia anti-brick dei firmware bundled. La compatibilità della famiglia bootloader UV-K1 7.03.01 e del trasporto è documentata; l'accettazione e l'avvio di QUESTO specifico BIN non sono stati provati su radio reale.
 
-La build e i test host dimostrano la compilabilità e il comportamento dei moduli simulati, **non** il funzionamento sul dispositivo fisico.
+Riferimento tecnico: https://github.com/knoinok/quansheng_toolkit (README e `kradio/dfu.py`).
 
-- Clock e tempi SysTick: 8 MHz resta un'assunzione; verificare handoff del bootloader 7.03.01.
-- Keypad: scansione e controlli software implementati; da verificare fisicamente su tastiera e revisione PCB reale.
-- AFC: misura/offset non validati; AFC-based spur rejection resta disabilitata. Il noise floor percentile e la conferma dei picchi riducono falsi positivi, ma non sostituiscono una misura AFC validata.
-- ST7565: init e rendering compilano; manca la verifica elettrica/visiva sul pannello.
-- RF: la commutazione LNA segue il driver UV-K1 di riferimento, ma registri, tempi e sensibilità vanno verificati con radio e strumentazione.
-- Calibrazione: nessuna area flash viene modificata; backup e layout devono essere verificati prima del flash.
-- Packaging: raw BIN non equivale a DFU; occorre validare il flusso di flashing e il recovery per il target effettivo.
+## Blocchi aperti — non certificato per uso radio
 
-**Decisione:** build e test automatici superati sul commit indicato. Vettore iniziale, indirizzo Reset_Handler e assert RAM/stack sono stati controllati staticamente nell'artefatto. Nessuna prova radio o flash è stata eseguita; i blocchi hardware/bootloader sopra elencati restano aperti.
+1. Nessuna sessione DFU è stata eseguita sul dispositivo dell'utente; nessun ACK reale del bootloader verificato.
+2. Nessun avvio fisico del BIN, né verifica display/tastiera/RF.
+3. Clock 8 MHz e handoff dal bootloader 7.03.01 restano assunzioni da provare.
+4. Il keypad è implementato sulla mappa GPIO pubblicata, ma non è stato collaudato sulla specifica revisione PCB.
+5. ST7565: init e rendering compilano; manca verifica visiva/elettrica sul pannello.
+6. RF/LNA: comportamento ricostruito da sorgente UV-K1 di riferimento; sensibilità e registri richiedono misure RF.
+7. AFC offset non validato; rigetto spur basato su AFC resta disabilitato.
+8. Calibrazione: nessuna area viene scritta dal firmware; backup e recovery devono essere salvati e verificati prima di qualsiasi aggiornamento.
+9. Licenza complessiva delle contribuzioni originali non dichiarata: repository privo di LICENSE/NOTICE radice.
+
+## Decisione
+
+**Build CI e verifiche statiche superate. Formato raw compatibile in linea generale con il flusso Custom BIN descritto dal toolkit, ma firmware NON certificato per il flash o per il funzionamento sulla radio.** Non procedere senza backup verificato della calibrazione e una procedura di recovery disponibile per il modello esatto.
