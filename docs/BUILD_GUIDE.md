@@ -27,11 +27,12 @@ A raw application BIN is not necessarily the same thing as a Quansheng packed DF
 
 ## Current limitations
 
-The build is a compile/link scaffold, not a release firmware:
-- BK4829 register map and tuning/RSSI/AFC are TODO because the public DS-BK4829-E01 V1.0 document does not provide the register programming table.
-- ST7565 renderer and keypad event scan are TODO.
+This is an experimental raw application build, not a release firmware:
+- BK4829 init values and AFC-disable bit are taken from the UV-K1 target driver source at the documented commit; AFC offset measurement remains TODO and returns neutral zero. The target silicon/register map still requires hardware confirmation.
+- ST7565 framebuffer, full-page blit, 5x7 text, spectrum bars and 4x4-dither waterfall are implemented. **Hardware RES is not mapped**, so the required reset pulse cannot yet be generated; the unverified software E2 reset command has been removed. Verify RES on the exact PCB before calling LCD initialization complete.
+- Keypad event scan remains TODO.
 - HSI/core clock handoff is not verified; SysTick delay currently assumes 8 MHz.
 - Calibration flash persistence is intentionally disabled.
-- No RF hardware validation or flash test has been performed.
+- No RF/display hardware validation or flash test has been performed.
 
 A successful CI build proves only that the source compiles and links. It does not prove RF operation, display operation, bootloader acceptance or safe flashing.
