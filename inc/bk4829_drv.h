@@ -14,5 +14,7 @@ void    bk4829_wait_settle(void);
 int16_t bk4829_read_rssi(void);
 /* TODO: misura AFC non validata; attualmente restituisce 0. */
 int16_t bk4829_read_afc(void);
+/* Zero finché il registro AFC non è verificato sul dump stock. */
+int     bk4829_afc_is_valid(void);
 
 #endif
