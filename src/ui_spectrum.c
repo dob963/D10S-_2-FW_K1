@@ -125,8 +125,15 @@ void ui_spectrum_set_info(uint32_t center,uint32_t span,uint32_t rbw)
 void ui_spectrum_set_detection(uint32_t frequency,uint8_t level,uint8_t noise_floor)
 {
     detected_noise=noise_floor;
-    if(frequency) { detected_frequency=frequency; detected_level=level; }
-    else if(!peak_hold) { detected_frequency=0u; detected_level=0u; }
+    if(frequency) {
+        if(!peak_hold || !detected_frequency || level>detected_level) {
+            detected_frequency=frequency;
+            detected_level=level;
+        }
+    } else if(!peak_hold) {
+        detected_frequency=0u;
+        detected_level=0u;
+    }
 }
 void ui_spectrum_get_range(uint32_t *start,uint32_t *stop)
 {
@@ -163,7 +170,6 @@ void ui_spectrum_draw(const int8_t *spec,int n)
         int live=spec[i]<0?0:spec[i]; if(live>127) live=127;
         if(peak_hold) {
             if(live>peak[i]) peak[i]=(int8_t)live;
-            else if(peak[i]>0) --peak[i];
         } else peak[i]=(int8_t)live;
         int x0=(i*ST7565_WIDTH)/n;
         int x1=((i+1)*ST7565_WIDTH)/n-1; if(x1<x0)x1=x0;
@@ -182,11 +188,10 @@ void ui_spectrum_draw(const int8_t *spec,int n)
             int mx=(int)(((uint64_t)(detected_frequency-start)*(ST7565_WIDTH-1u))/span_hz);
             int mh=((int)detected_level*GRAPH_HEIGHT)/127;
             int my=ST7565_HEIGHT-1-mh;
-            if(my>GRAPH_TOP+2) {
-                st7565_set_pixel(mx,my-2,1);
-                st7565_set_pixel(mx-1,my-1,1);
-                st7565_set_pixel(mx+1,my-1,1);
-            }
+            if(my<GRAPH_TOP+2) my=GRAPH_TOP+2;
+            st7565_set_pixel(mx,my-2,1);
+            st7565_set_pixel(mx-1,my-1,1);
+            st7565_set_pixel(mx+1,my-1,1);
         }
     }
 }
