@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "median3.h"
+#include "calib.h"
 #include "stabilizer.h"
 #include "waterfall.h"
 
@@ -23,6 +24,12 @@ int main(void)
 
     assert(median3(1, 9, 5) == 5);
     assert(median3(-4, 2, 0) == 0);
+
+    calib_load();
+    assert(calib_apply_dc(123, 0) == 123);
+    assert(calib_apply_dc(-2, 0) == 0);
+    assert(calib_apply_dc(123, -1) == 123);
+    assert(calib_apply_dc(123, SPEC_BINS) == 123);
 
     /* Un singolo bin alto non deve propagarsi ai bin adiacenti. */
     stabilizer_init(&state);
