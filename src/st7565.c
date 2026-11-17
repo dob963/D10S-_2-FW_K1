@@ -3,10 +3,10 @@
 
 /* Bus display dedicato verificato sul driver UV-K1 upstream:
  * PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS. RF: PB8/PB9/PF9.
- * TODO hardware: il pin RES del pannello non e' mappato dalle fonti
- * verificate. Non sostituirlo con il comando software E2: il datasheet
- * richiede il reset tramite RES. Identificare RES su schema/PCB prima
- * di dichiarare completa l'inizializzazione o provare il display.
+ * Il pin fisico RES non e' assegnato a un GPIO: la connessione sulla
+ * revisione PCB resta da verificare. L'inizializzazione locale segue
+ * la sequenza software del driver UV-K1: DISPLAY OFF, 0xE2, attesa,
+ * configurazione controller e DISPLAY ON. Nessun GPIO RES ipotetico.
  */
 #define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define LCD_SCK 5u
