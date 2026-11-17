@@ -153,7 +153,6 @@ void ui_spectrum_draw(const int8_t *spec,int n)
     if(detected_frequency){uint32_t mhz=detected_frequency/1000000u,frac=(detected_frequency%1000000u)/1000u;put3(detline+10,mhz);put3(detline+14,frac);}
     else{detline[10]='-';detline[11]='-';detline[12]='-';detline[14]='-';detline[15]='-';detline[16]='-';}
     (void)detected_level; st7565_draw_text(0,16,detline);
-    int max_bin=0,max_val=-1;
     for(int i=0;i<n;++i) {
         int live=spec[i]<0?0:spec[i]; if(live>127) live=127;
         if(peak_hold) {
@@ -169,16 +168,19 @@ void ui_spectrum_draw(const int8_t *spec,int n)
             if(h>0) st7565_draw_vline(x,top,base);
             if(ph>0) st7565_set_pixel(x,ptop,1);
         }
-        if(live>max_val){max_val=live;max_bin=i;}
     }
-    if(max_val>0) {
-        int mx=(max_bin*ST7565_WIDTH)/n;
-        int mh=(max_val*GRAPH_HEIGHT)/127;
-        int my=ST7565_HEIGHT-1-mh;
-        if(my>GRAPH_TOP+2) {
-            st7565_set_pixel(mx,my-2,1);
-            st7565_set_pixel(mx-1,my-1,1);
-            st7565_set_pixel(mx+1,my-1,1);
+    if(detected_frequency && span_hz) {
+        uint32_t start=center_hz-span_hz/2u;
+        uint32_t stop=center_hz+span_hz/2u;
+        if(detected_frequency>=start && detected_frequency<=stop) {
+            int mx=(int)(((uint64_t)(detected_frequency-start)*(ST7565_WIDTH-1u))/span_hz);
+            int mh=((int)detected_level*GRAPH_HEIGHT)/127;
+            int my=ST7565_HEIGHT-1-mh;
+            if(my>GRAPH_TOP+2) {
+                st7565_set_pixel(mx,my-2,1);
+                st7565_set_pixel(mx-1,my-1,1);
+                st7565_set_pixel(mx+1,my-1,1);
+            }
         }
     }
 }
