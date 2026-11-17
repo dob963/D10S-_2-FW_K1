@@ -54,7 +54,7 @@ int main(void)
     /* Sweep fine: tutte le 128 frequenze occupano i rispettivi bin. */
     fake_rssi = 100;
     tune_count = 0u;
-    sweep_adaptive(144000000u, 148000000u, spectrum, afc);
+    sweep_adaptive(144000000u, 148000000u, spectrum, afc, valid);
     assert(tune_count == SPEC_BINS);
     assert(count_nonzero(spectrum) == SPEC_BINS);
     assert(count_valid(valid) == SPEC_BINS);
