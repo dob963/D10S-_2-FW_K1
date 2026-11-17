@@ -22,8 +22,8 @@ jobs:
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_dsp_no_cascade.c src/stabilizer.c src/median3.c src/waterfall.c src/calib.c -o build/test_dsp_no_cascade
           ./build/test_dsp_no_cascade
           if grep -q 'sweep_average(spec_raw' src/main.c; then echo 'Cross-sweep averaging is forbidden in live trace'; exit 1; fi
-          grep -Eq 'median3\(spec_raw\[i[[:space:]]*-[[:space:]]*1\]' src/main.c
-          grep -Eq 'spec_avg\[i\][[:space:]]*/[[:space:]]*4' src/main.c
+          grep -Eq 'median3\\(spec_raw\\[i[[:space:]]*-[[:space:]]*1\\]' src/main.c
+          grep -Eq 'spec_avg\\[i\\][[:space:]]*/[[:space:]]*4' src/main.c
           if grep -q 'agc_process' src/main.c; then echo 'Per-bin software AGC is forbidden in live sweep'; exit 1; fi
           if grep -q 'bk4829_afc_is_valid' src/main.c; then echo 'Unvalidated AFC must not gate spectrum processing'; exit 1; fi
       - name: Adaptive sweep frequency mapping tests
@@ -42,13 +42,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
-      - name: Build raw application image
-        run: make clean all
+      - name: Build and validate UV-K1 V3 image
+        run: make clean all check-image
       - name: Upload build outputs
         uses: actions/upload-artifact@v4
         with:
           name: uv-k1-v3-spectrum-build
           path: |
-            build/spectrum_k1_v3.elf
-            build/spectrum_k1_v3.bin
-            build/spectrum_k1_v3.map
+            build/uvk1_spectrum.elf
+            build/uvk1_spectrum.bin
+            build/uvk1_spectrum.map
