@@ -33,6 +33,16 @@
 #define SYST_CSR_CLKSOURCE (1u << 2)
 #define SYST_CSR_COUNTFLAG (1u << 16)
 
+/* 35 NOP per fase: timing del bus seriale UV-K1 upstream SHORT_DELAY(). */
+#define RF_SHORT_DELAY() __asm volatile (\
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
+    "nop\\n nop\\n nop\\n nop\\n nop\\n")
+
 static void pin_mode(uint32_t base, uint32_t pin, uint32_t mode)
 {
     uint32_t shift = pin * 2u;
@@ -66,10 +76,11 @@ static void rf_sdio_input(void)
 static void rf_send_bit(uint32_t bit)
 {
     pin_write(GPIOB_BASE, RF_SDIO_PIN, bit);
-    __asm volatile ("nop");
+    RF_SHORT_DELAY();
     pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
-    __asm volatile ("nop");
+    RF_SHORT_DELAY();
     pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
+    RF_SHORT_DELAY();
 }
 
 static uint32_t rf_read_bit(void)
@@ -79,11 +90,11 @@ static uint32_t rf_read_bit(void)
      * di salita; leggere dopo il fronte di discesa sposta il bit.
      * Sequenza allineata al driver UV-K1 upstream ReadU16(). */
     bit = pin_read(GPIOB_BASE, RF_SDIO_PIN);
-    __asm volatile ("nop");
+    RF_SHORT_DELAY();
     pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
-    __asm volatile ("nop");
+    RF_SHORT_DELAY();
     pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
-    __asm volatile ("nop");
+    RF_SHORT_DELAY();
     return bit;
 }
 
@@ -119,12 +130,19 @@ void bk_spi_write(uint8_t reg, uint16_t value)
 {
     int bit;
     reg &= 0x7Fu;
+    pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
+    pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
+    RF_SHORT_DELAY();
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
     rf_send_bit(0u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     for (bit = 15; bit >= 0; --bit) rf_send_bit((value >> bit) & 1u);
+    RF_SHORT_DELAY();
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
+    RF_SHORT_DELAY();
+    pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
+    pin_write(GPIOB_BASE, RF_SDIO_PIN, 1u);
 }
 
 uint16_t bk_spi_read(uint8_t reg)
@@ -132,15 +150,23 @@ uint16_t bk_spi_read(uint8_t reg)
     int bit;
     uint16_t value = 0u;
     reg &= 0x7Fu;
+    pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
+    pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
+    RF_SHORT_DELAY();
     pin_write(GPIOF_BASE, RF_SCN_PIN, 0u);
     rf_sdio_output();
     rf_send_bit(1u);
     for (bit = 6; bit >= 0; --bit) rf_send_bit((reg >> bit) & 1u);
     rf_sdio_input();
-    delay_us(1u);
+    RF_SHORT_DELAY();
     for (bit = 15; bit >= 0; --bit)
         value = (uint16_t)((value << 1) | rf_read_bit());
+    rf_sdio_output();
+    RF_SHORT_DELAY();
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
+    RF_SHORT_DELAY();
+    pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
+    pin_write(GPIOB_BASE, RF_SDIO_PIN, 1u);
     return value;
 }
 
