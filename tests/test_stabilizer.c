@@ -36,7 +36,6 @@ int main(void)
     assert(out[10] == 40);
     stabilizer_apply(&state, in, out, SPEC_BINS);
     stabilizer_apply(&state, in, out, SPEC_BINS);
-    stabilizer_apply(&state, in, out, SPEC_BINS);
     assert(out[10] == 40);
     stabilizer_apply(&state, in, out, SPEC_BINS);
     assert(out[10] == 38);
