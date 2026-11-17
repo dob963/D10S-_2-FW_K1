@@ -3,48 +3,41 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`, branch `main`
 
-## Evidenze dal codice corrente
+## Evidenze correnti nel codice
 
-- `src/system_init.c` contiene una `SystemInit()` vuota.
-- `src/hw_init.c` definisce `HW_CORE_CLOCK_HZ = 8000000` come valore predefinito e usa tale costante per i ritardi SysTick.
-- Il timer SysTick viene interrogato in polling; non viene abilitato il suo interrupt.
-- Il firmware viene collegato con vettore applicativo a `0x08002800`.
-- `startup/startup_py32f071xx.s` non programma il registro VTOR.
+- Il linker colloca la tabella vettori a `0x08002800`.
+- Lo startup chiama `SystemInit()` prima di inizializzare .data/.bss e prima di main.
+- `SystemInit()` imposta `SCB->VTOR = 0x08002800`, coerentemente con il template Puya per il target K1.
+- Non viene più forzato HSI a 8 MHz: il clock lasciato dal bootloader viene preservato.
+- `SystemCoreClockUpdate()` decodifica SWS, HSI_FS, HSIDIV, PLL source/multiplier e AHB prescaler dai registri RCC PY32F071.
+- `delay_us()` e `delay_ms()` usano il valore HCLK decodificato, non una costante fissa da 8 MHz.
 
-## Riferimento ufficiale consultato
+## Fonte primaria consultata
 
-Repository Puya: `OpenPuya/PY32F071_Firmware`, revisione
-`0ed2f4b4d3391eccfd4491006a30295fd78e32c2`, file
-`Templates/PY32F071xx_Templates/Src/system_py32f071.c`.
+Repository: `armel/uv-k1-k5v3-firmware-custom`, commit  
+`3261ca7883d5b0b60c0905d8766612dee7b4191d`.
 
-Il file ufficiale documenta:
-- HSI nominale a 8 MHz come valore iniziale di riferimento;
-- selezione della frequenza HSI tramite `RCC->ICSCR`;
-- divisore HSI tramite `RCC->CR`;
-- selezione della sorgente SYSCLK tramite `RCC->CFGR`;
-- eventuale moltiplicazione PLL e prescaler AHB;
-- configurazione VTOR nel modello template, con offset predefinito zero.
+File:
+- `Core/Src/system_py32f071.c`: definizioni HSI/HSE/LSI/LSE e algoritmo SystemCoreClockUpdate.
+- `Drivers/CMSIS/Device/PY32F071/Include/py32f071xB.h`: offset RCC, campi CFGR/PLLCFGR/ICSCR/CR.
+- `Core/py32f071xb.ld`: origine applicazione UV-K1 `0x08002800`.
 
-Il riferimento è distribuito sotto BSD-3-Clause (avvisi Puya e ST). È stato consultato per l'audit; non è stato copiato codice nel firmware.
-
-## Correzione applicata dopo l'audit
-
-La prima prova di impostazione diretta di `SCB->VTOR` è stata ritirata nel commit `fc8a03964069d5b0f3bd2a8e0f173cc999d48959`: la documentazione CMSIS segnala che VTOR è opzionale in Cortex-M0+ e la tabella generica non garantisce che sia implementato nel PY32F071 specifico. Non è corretto scrivere un registro non confermato. `SystemInit()` resta quindi neutra. Occorre verificare nel CMSIS/header e nel Reference Manual della revisione esatta PY32F071, quindi nel bootloader 7.03.01, il meccanismo effettivo di vettorizzazione a `0x08002800` prima di abilitare interrupt.
+Il codice clock locale è una reimplementazione indipendente delle formule e dei campi documentati; non è copiato il file Puya.
 
 ## Esito
 
-**Clock non certificato.** Il fatto che il riferimento Puya usi HSI nominale da 8 MHz non dimostra che il bootloader Quansheng 7.03.01 consegni il controllo all'applicazione con HSI/HSIDIV/AHB nelle stesse condizioni. Pertanto la costante fissa da 8 MHz non può essere considerata una misura verificata.
+**Clock handoff: migliorato, non certificato su radio.** Il software ora legge la configurazione effettiva invece di sovrascriverla e presume che il clock sia 8 MHz. La lettura del valore RCC deve ancora essere confrontata con una misura sul dispositivo e con lo stato lasciato dal bootloader 7.03.01.
 
-**VTOR da verificare.** Il vettore dell'applicazione è collocato a `0x08002800`, mentre lo startup non imposta esplicitamente VTOR. Prima di abilitare interrupt o usare handler applicativi, va verificato il comportamento del bootloader al salto e, se necessario, impostata la base vettori dell'applicazione secondo il reference manual e il protocollo di avvio effettivo.
+Il riferimento upstream F4HWN v6.3.0 espone inoltre un servizio applicativo denominato `cycles_48mhz`; questo non prova da solo che ogni handoff o ogni revisione hardware abbia HCLK a 48 MHz. Non impostare PLL o flash latency senza una verifica specifica del bootloader e del reference manual.
 
-## Azioni richieste prima della release
+## Gate prima della release
 
-1. Implementare una lettura indipendente dei registri clock PY32F071 e calcolare HCLK, oppure configurare esplicitamente un clock noto con sequenza Puya documentata e verificata.
-2. Derivare i tempi SysTick dal clock effettivo, senza mantenere una costante presunta.
-3. Verificare l'allineamento e il valore VTOR all'ingresso dell'applicazione; mantenere il polling finché il vettore interrupt non è confermato.
-4. Verificare con strumentazione i tempi RF 3-wire e il refresh LCD.
-5. Eseguire una prova di avvio reale con bootloader 7.03.01, senza scrivere nelle aree di calibrazione.
+1. Misurare HCLK effettivo sulla radio, oppure confrontare il calcolo RCC con una lettura SWD affidabile.
+2. Confrontare la temporizzazione SysTick con oscilloscopio/logic analyzer.
+3. Verificare l'indirizzo vettori e il salto del bootloader sul dispositivo.
+4. Verificare i tempi del bus RF e del display.
+5. Non abilitare interrupt non necessari finché l'handoff vettori non è verificato.
 
 ## Decisione
 
-Nessuna modifica di clock viene applicata alla cieca: forzare HSI o PLL senza conoscere lo stato lasciato dal bootloader potrebbe alterare i tempi RF e compromettere il funzionamento. Questo audit è un blocco di release, non una dichiarazione di guasto del microcontrollore.
+Nessun clock fisso da 8 o 48 MHz viene imposto senza prova. Il firmware preserva il clock ereditato e ne calcola HCLK dai registri. Il test fisico resta un gate obbligatorio.
