@@ -10,7 +10,7 @@ I test host sono eseguiti dal workflow `.github/workflows/arm-build.yml` prima d
 - Rifiuto della lettura bus `0xFFFF` per evitare falsi picchi.
 - Attesa: 1 ms, polling REG 0x63 con soglia 200 e massimo 50 letture, scarto del primo RSSI.
 - Blocco delle scritture di tuning se REG 0x30 non è leggibile.
-- AFC resta placeholder: il test verifica che non venga spacciato per una misura.
+- AFC resta placeholder: il test verifica che `bk4829_afc_is_valid()` resti falso e che il firmware non applichi una falsa terza coerenza.
 
 ## DSP e Waterfall (`tests/test_dsp_no_cascade.c`)
 
