@@ -187,6 +187,8 @@ void hw_init(void)
     pin_mode(GPIOB_BASE, RF_SCK_PIN, 1u);
     pin_mode(GPIOB_BASE, RF_SDIO_PIN, 1u);
     pin_mode(GPIOF_BASE, RF_SCN_PIN, 1u);
+    pin_mode(GPIOF_BASE, 8u, 1u); /* PF8 backlight, active high */
+    pin_write(GPIOF_BASE, 8u, 0u); /* keep dark during controller init */
     pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
     pin_write(GPIOB_BASE, RF_SDIO_PIN, 0u);
     pin_write(GPIOF_BASE, RF_SCN_PIN, 1u);
@@ -218,4 +220,5 @@ void hw_init(void)
 
     bk4829_init();
     st7565_init();
+    pin_write(GPIOF_BASE, 8u, 1u); /* full backlight after ST7565 is ready */
 }
