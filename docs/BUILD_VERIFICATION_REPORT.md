@@ -16,12 +16,6 @@ Tutti gli step sono terminati con esito SUCCESS sul commit `258194824b2c7b4dece7
 - test mapping sweep;
 - test noise floor, conferma picchi e interpolazione;
 - compilazione ARM GCC e upload artefatti.
-- test host BK4829, inclusa selezione LNA VHF/UHF;
-- test DSP no-cascade e isolamento Waterfall;
-- test sweep uniforme, copertura completa e mapping frequenza;
-- installazione toolchain ARM GCC;
-- compilazione ARM e generazione raw BIN;
-- pubblicazione artefatto.
 
 ## Artefatti
 
