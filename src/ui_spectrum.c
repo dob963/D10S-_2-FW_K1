@@ -192,10 +192,10 @@ void ui_spectrum_handle(void)
     int key=pending_event; pending_event=0;
     switch(key) {
     case KEY_UP:
-        if(center_hz+25000u<=max_center) center_hz+=25000u;
+        if(center_hz+25000u<=max_center-span_hz/2u) center_hz+=25000u;
         break;
     case KEY_DOWN:
-        if(center_hz>=min_center+25000u) center_hz-=25000u;
+        if(center_hz>=min_center+span_hz/2u+25000u) center_hz-=25000u;
         break;
     case KEY_MENU:
         span_index=(uint8_t)((span_index+1u)%4u);
