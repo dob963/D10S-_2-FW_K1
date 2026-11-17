@@ -88,5 +88,4 @@ void SystemInit(void)
      * from RCC registers instead of assuming a fixed 8 MHz or 48 MHz.
      */
     SCB_VTOR = 0x08002800u;
-    SystemCoreClockUpdate();
 }
