@@ -11,7 +11,7 @@
 - La schermata usa 16 righe intestazione, 16 righe waterfall e 32 righe traccia live.
 - Frequenza centrale e span sono visualizzati in MHz; RBW è visualizzata in kHz. RBW zero è indicata come sconosciuta (---).
 - Trasporto display bit-bang SPI mode 3 (CPOL=HIGH, CPHA=2EDGE) su PA5 (SCK), PA7 (MOSI), PA6 (A0), PB2 (CS), 8 pagine x 128 byte. Ogni pagina usa offset colonna +4.
-- Sequenza di init ST7565: reset software E2, display off/on, bias 1/9, COM normale, SEG invertito, start line, resistor ratio 5.0, contrasto iniziale 31/63, power control con stadi e tempi di attesa. Parametri ricavati come riferimento dal driver upstream `App/driver/st7565.c` (Apache-2.0), reimplementati autonomamente.
+- Sequenza comandi ST7565: display off/on, bias 1/9, COM normale, SEG invertito, start line, resistor ratio 5.0, contrasto iniziale 31/63, power control con stadi e tempi di attesa. Parametri ricavati come riferimento dal driver upstream `App/driver/st7565.c` (Apache-2.0), reimplementati autonomamente. Il comando software E2 e' stato rimosso: il datasheet richiede reset tramite pin RES.
 - hw_init configura GPIO e chiama st7565_init; il main esegue il blit dopo aver composto waterfall e traccia.
 
 ## Pin e bus
@@ -20,14 +20,14 @@ Il sorgente hardware configura il bus RF su PB8 (clock), PB9 (SDIO bidirezionale
 
 ## Limiti hardware ancora aperti
 
-1. Il reset implementato è software ST7565 (comando E2). Il driver upstream K1 dichiara che non è disponibile un reset hardware utilizzabile sulla radio; la funzione HardwareReset è infatti un no-op. Il firmware non pilota un pin RESET fisico.
+1. **TODO bloccante per init completa:** il pin hardware RES non è identificato nelle fonti disponibili. Il datasheet richiede reset tramite RES; il comando software E2 non viene inviato. La routine attende 120 ms e prosegue con i comandi standard, ma senza impulso RES l'avvio del controller non è garantito. Verificare schema e continuità sulla revisione PCB prima di dichiarare completo il driver.
 2. Bias 1/9, COM normale, SEG invertito, resistor ratio 5.0 e contrasto 31/63 seguono la configurazione software upstream K1; contrasto e orientamento vanno comunque verificati sul pannello della specifica revisione PCB.
 3. SPI mode 3 e offset colonna +4 sono riferimenti del driver upstream K1; non è stata eseguita una cattura logica sul dispositivo specifico, quindi timing e risposta del pannello devono essere misurati.
 4. Non è stata eseguita prova fisica sul dispositivo: il driver è compilato ma non ancora dichiarato validato elettricamente.
 
 ## Memoria
 
-Il solo framebuffer occupa 1.024 byte. Il buffer waterfall occupa altri 2.048 byte statici. La build ARM precedente a questa implementazione display fisica occupava 5.800 byte di BSS; la nuova misura BSS e il margine stack vanno presi dalla build corrente. Il linker riserva 1.536 byte di stack e verifica che .data/.bss non invadano tale riserva.
+Il solo framebuffer occupa 1.024 byte. Il buffer waterfall occupa altri 2.048 byte statici. La misura aggiornata di .data/.bss va letta dall'ultima build ARM riuscita; il linker riserva 1.536 byte di stack e verifica che .data/.bss non invadano tale riserva. Il linker riserva 1.536 byte di stack e verifica che .data/.bss non invadano tale riserva.
 
 ## Frequenza aggiornamento
 
