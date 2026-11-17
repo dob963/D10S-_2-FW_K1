@@ -8,8 +8,10 @@
 #define ST7565_FB_SIZE 1024
 
 /* Framebuffer 128x64 e trasporto bit-bang ST7565 dedicato.
- * Reset hardware RES: TODO finche' il pin non e' verificato sullo schema.
- * Non viene inviato il comando software E2.
+ * Inizializzazione corrente: DISPLAY OFF, reset software 0xE2,
+ * attesa 120 ms, configurazione controller e DISPLAY ON.
+ * Il pin fisico RES non e' assegnato a un GPIO: la connessione sulla
+ * revisione PCB resta da verificare. Non pilotare un pin ipotetico.
  */
 void st7565_init(void);
 void st7565_clear(void);
