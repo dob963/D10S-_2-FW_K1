@@ -207,9 +207,11 @@ void ui_spectrum_handle(void)
     case KEY_MENU:
         span_index=(uint8_t)((span_index+1u)%4u);
         span_hz=spans[span_index];
+        clamp_center_to_span();
         break;
     case KEY_EXIT:
         center_hz=146000000u; span_index=3u; span_hz=spans[span_index];
+        clamp_center_to_span();
         break;
     case KEY_F:
         peak_hold=(uint8_t)!peak_hold;
@@ -220,10 +222,12 @@ void ui_spectrum_handle(void)
     case KEY_SIDE1:
         if(span_index>0u) --span_index;
         span_hz=spans[span_index];
+        clamp_center_to_span();
         break;
     case KEY_SIDE2:
         if(span_index<3u) ++span_index;
         span_hz=spans[span_index];
+        clamp_center_to_span();
         break;
     default:
         break;
