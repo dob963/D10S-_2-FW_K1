@@ -3,9 +3,9 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Ultima build ARM completata: [43985052881](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985052881)  
-Commit build: `7c18d2fe494c671df23957d8531d2aa2a87d0d1f`  
-Nota: le modifiche successive al driver RF per saltare letture quando REG_30 è invalido hanno superato i test host; la relativa build ARM è in corso.
+Ultima build ARM completata: [43985151117](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985151117)  
+Commit build: `edfb12d97d90ba9b5165995578b148b6cfb77492`  
+La successiva estensione del test host per verificare il bypass di letture RF con REG_30 invalido è PASS; la relativa ripetizione ARM è in corso.
 
 ## Esito compilazione e test
 
@@ -22,22 +22,23 @@ Test host con `gcc -std=c11 -Wall -Wextra -Werror`:
 - BK4829 adapter: PASS (tuning 0x38/0x39/0x30, RSSI 9 bit, glitch wait, bus read non valido, limiti banda)
 - DSP no-cascade/Waterfall: PASS (median, picco isolato, assenza propagazione laterale, Waterfall disabilitato senza scritture)
 - Sweep mapping: PASS (coarse/fine, mask validi, span ridotto e range non valido)
+- Guardia AFC e static check: PASS (nessuna falsa tripla coerenza, nessuna EMA live, median snapshot obbligatorio)
 - Calibrazione DC: PASS (offset default, saturazione negativa, limiti indice)
 
 Metriche riportate dal linker:
-- FLASH: 6.464 byte su 96 KiB (6,58%)
+- FLASH: 6.488 byte su 96 KiB (6,60%)
 - RAM `.data + .bss`: 6.064 byte su 16 KiB (37,01%)
-- `text`: 6.460 byte
+- `text`: 6.484 byte
 - `data`: 4 byte
 - `bss`: 6.060 byte
 - stack riservato dal linker: 1.536 byte
 - RAM residua dopo `.data/.bss` e riserva stack: 8.784 byte
-- BIN raw: 6.464 byte
+- BIN raw: 6.488 byte
 
 Artefatto GitHub Actions:
 - Nome: `uv-k1-v3-spectrum-build`
-- ID: `14284238743`
-- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985052881/artifacts/14284238743)
+- ID: `14284009093`
+- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985151117/artifacts/14284009093)
 
 ## Warning
 
