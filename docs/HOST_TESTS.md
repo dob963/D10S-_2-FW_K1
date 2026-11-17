@@ -15,6 +15,7 @@ I test host sono eseguiti dal workflow `.github/workflows/arm-build.yml` prima d
 ## DSP e Waterfall (`tests/test_dsp_no_cascade.c`)
 
 - Median 3-tap su casi ordinati e misti.
+- Controllo statico: il median usa uno snapshot immutabile e il main non usa EMA/cross-sweep average nella traccia live.
 - Calibrazione DC: default zero, clamp negativo a zero e controllo dei limiti bin.
 - Un picco isolato nello stabilizzatore non si propaga ai bin adiacenti.
 - La fase hold/release non crea valori nei bin vicini.
