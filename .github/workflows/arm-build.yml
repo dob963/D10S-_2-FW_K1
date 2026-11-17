@@ -23,6 +23,7 @@ jobs:
           ./build/test_dsp_no_cascade
           if grep -q 'sweep_average(spec_raw' src/main.c; then echo 'Cross-sweep averaging is forbidden in live trace'; exit 1; fi
           grep -q 'spec_med_in' src/main.c
+          grep -q 'bk4829_afc_is_valid' src/main.c
           if grep -q 'median3(spec_avg' src/main.c; then echo 'In-place median cascade is forbidden'; exit 1; fi
       - name: Install ARM GCC
         run: |
