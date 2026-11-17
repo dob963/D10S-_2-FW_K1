@@ -103,6 +103,7 @@ int main(void)
 
     /* AFC resta esplicitamente non implementato. */
     assert(bk4829_read_afc() == 0);
+    assert(bk4829_afc_is_valid() == 0);
 
     puts("BK4829 driver host tests: PASS");
     return 0;
