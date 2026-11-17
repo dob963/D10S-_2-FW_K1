@@ -12,7 +12,7 @@ Ultima build ARM del codice renderer/RF completata con esito SUCCESS:
 - Test host BK4829, DSP/no-cascade/waterfall e sweep: PASS
 - Dimensione artefatto verificata: raw BIN 6.688 byte; `.data` 4 byte + `.bss` 6.060 byte = 6.064 byte RAM. Mappa linker: `_ebss=0x200017B0`, limite stack `0x20003A00`, stack riservato 1.536 byte.
 
-Il commit `2fbe97b` include la rimozione del comando software ST7565 `0xE2`. La build ARM e tutti i test host sullo stesso commit sono terminati con esito SUCCESS. Il commit successivo `70c245c` aggiorna soltanto documentazione.
+Il commit `2fbe97b` includeva la rimozione del comando software ST7565 `0xE2`; la build ARM e i test host su quel commit sono terminati con esito SUCCESS. Il commit `7bea627` reintroduce la sequenza di reset software documentata dal driver UV-K1 upstream. La nuova modifica deve ancora passare una build ARM e i test CI.
 
 ## Pinout documentato
 
@@ -39,7 +39,7 @@ Implementati:
 - waterfall 16 righe con dithering Bayer 4x4;
 - frame pacing nominale di 67 ms (circa 15 fps), subordinato al clock reale.
 
-**TODO hardware bloccante:** il pin fisico RES non è identificato nelle fonti disponibili. Il comando software E2 è stato rimosso; senza un impulso hardware RES l'inizializzazione del controller non è garantita. Individuare RES su schema/PCB della revisione esatta e integrarlo solo con evidenza del pin.
+**Reset adottato:** il pin fisico RES non è identificato nelle fonti disponibili e il driver UV-K1 upstream dichiara che non esiste un reset hardware utilizzabile. Il progetto ora segue la sequenza upstream: display OFF, comando software `0xE2`, attesa 120 ms, quindi configurazione e accensione. Il pin RES non viene assegnato a un GPIO ipotetico. La verifica elettrica della revisione PCB resta aperta.
 
 ## Linker e memoria
 
@@ -80,13 +80,33 @@ a un reset comune o lasciato non connesso. Non è stata trovata evidenza
 sufficiente per assegnare RES a un GPIO PY32F071. **Non collegare né
 pilotare un GPIO ipotetico.**
 
-Il progetto locale mantiene quindi il TODO hardware e non inventa un pin.
-La scelta di non inviare `0xE2` segue il requisito specifico di questo
-progetto, ma differisce dall'inizializzazione upstream; di conseguenza
-la funzionalità del display non può essere considerata confermata finché
-non si verifica lo schema/net della revisione PCB oppure non si autorizza
-una sequenza di reset alternativa compatibile con l'hardware effettivo.
+Il progetto locale adotta ora la sequenza software reset del driver upstream
+(`DISPLAY OFF`, `0xE2`, attesa 120 ms), senza copiare il codice sorgente.
+La routine è stata reimplementata nel driver locale. Questo allinea
+l'inizializzazione al comportamento usato dagli sviluppatori per UV-K1;
+la funzionalità effettiva del pannello resta comunque da verificare su
+radio fisica e la connessione elettrica del pin RES non è stata misurata.
 
 Per chiudere con evidenza: occorre ottenere lo schema di servizio dal
 produttore oppure ispezionare le fotografie teardown ad alta risoluzione
 e misurare la continuità tra RES del pannello, GPIO MCU, VDD e reset comune.
+
+
+## Adeguamento alla soluzione degli sviluppatori — 2026-11-17
+
+Commit locale: `7bea62778ca83861002eb4fc3127d41b4c0446fd`.
+
+Il driver `src/st7565.c` ora esegue:
+1. display OFF (`0xAE`);
+2. reset software ST7565 (`0xE2`);
+3. attesa 120 ms;
+4. configurazione del controller, alimentazione interna, pulizia RAM e display ON.
+
+Riferimento tecnico: `armel/uv-k1-k5v3-firmware-custom/App/driver/st7565.c`,
+funzioni `ST7565_Init()` e `ST7565_HardwareReset()`. Il riferimento è
+distribuito con licenza Apache-2.0; è stata adottata la sequenza funzionale
+con implementazione locale indipendente, senza importare il file upstream.
+La licenza e la fonte sono registrate qui per tracciabilità.
+
+**Stato:** modifica committata; build ARM e test automatici del nuovo commit
+ancora da eseguire. Nessuna prova display su radio fisica è stata eseguita.
