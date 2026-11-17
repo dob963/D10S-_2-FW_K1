@@ -108,3 +108,19 @@ La mappa upstream in `App/driver/bk4829.c` assegna CSN=PF9, SCL=PB8, SDA=PB9. Il
 - Verificare il protocollo di lettura/scrittura e il clock del bus sul target.
 - Salvare e verificare backup calibrazione/configurazione prima di qualsiasi flash.
 - Non considerare il driver validato su hardware finché non sono state eseguite prove RF reali.
+
+
+## Correzione debug 2026-11-17
+
+Il confronto puntuale con `BK4819_PickRXFilterPathBasedOnFrequency()` nel driver UV-K1 upstream mostra che la soglia è **28.000.000 Hz**, non 280 MHz. La scelta GPIO è quindi:
+- sotto 28 MHz: GPIO4 VHF;
+- da 28 MHz in su: GPIO3 UHF.
+
+Il precedente confronto a 280 MHz era un errore di fattore 10 ed è stato corretto in `src/bk4829_drv.c`; il test ora verifica 146 MHz (UHF) e 27 MHz (VHF).
+
+Il confronto del bus seriale con `BK4819_ReadU16()`, `BK4819_WriteU8()`, `BK4819_WriteU16()`, `BK4819_ReadRegister()` e `BK4819_WriteRegister()` ha inoltre portato a correggere:
+- campionamento SDA nella fase SCL bassa, prima del fronte di salita;
+- temporizzazione `SHORT_DELAY()` di 35 NOP per ciascuna fase;
+- sequenza CS/SCL di inizio e fine transazione e ripristino SDA/SCL.
+
+Queste sono correzioni della temporizzazione e della selezione del ramo RF basate sul driver di riferimento; non certificano il marking del chip, la compatibilità elettrica o il funzionamento sul PCB specifico.
