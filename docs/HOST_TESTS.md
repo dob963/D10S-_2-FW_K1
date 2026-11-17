@@ -12,6 +12,13 @@ I test host sono eseguiti dal workflow `.github/workflows/arm-build.yml` prima d
 - Blocco delle scritture di tuning se REG 0x30 non è leggibile.
 - AFC resta placeholder: il test verifica che `bk4829_afc_is_valid()` resti falso e che il firmware non applichi una falsa terza coerenza.
 
+## Sweep adattivo (`tests/test_sweep_mapping.c`)
+
+- Sweep coarse: 32 misure distribuite sui bin di frequenza corretti, con mask validi esplicita.
+- Sweep fine: 128 misure su 128 bin.
+- Span ridotto: step minimo non nullo, nessun loop infinito.
+- Range non valido: nessuna sintonia e output azzerato.
+
 ## DSP e Waterfall (`tests/test_dsp_no_cascade.c`)
 
 - Median 3-tap su casi ordinati e misti.
