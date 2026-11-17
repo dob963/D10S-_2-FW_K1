@@ -30,7 +30,7 @@ jobs:
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_sweep_mapping.c src/sweep_engine.c -o build/test_sweep_mapping
           ./build/test_sweep_mapping
-      - name: Install ARM GCC
+      - name: Peak tracker regression tests\n        run: |\n          gcc -std=c11 -Wall -Wextra -Werror -Iinc tests/test_peak_tracker.c src/peak_tracker.c -o build/test_peak_tracker\n          ./build/test_peak_tracker\n      - name: Install ARM GCC
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
