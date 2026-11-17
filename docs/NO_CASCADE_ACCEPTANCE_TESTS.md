@@ -14,7 +14,7 @@ Maintain four independent data products:
 - `peak_hold[b]`: visual maximum accepted for bin `b`, independent from the live trace.
 - `waterfall[row][b]`: snapshot of a completed sweep, stored only when Waterfall is enabled.
 
-The live measurement path copies the current sweep directly; `sweep_average()` is not used by `main.c`. Median3 is spatial within the current sweep. Stabilizer hold/release is allowed only per bin, before rendering. No cross-fade, temporal EMA, gradient clamp or neighbor propagation may modify the live measurement.
+The live measurement path copies the current sweep directly; `sweep_average()` is not used by `main.c`. Adaptive coarse samples are mapped to their true frequency bins and marked valid; unsampled bins remain empty rather than being shifted to the left or interpolated. Median3 runs on a compact snapshot of valid samples in frequency order, never in-place. Stabilizer hold/release is allowed only per bin, before rendering. No cross-fade, temporal EMA, gradient clamp or neighbor propagation may modify the live measurement.
 
 ## Deterministic host tests
 
