@@ -32,9 +32,9 @@ La regolazione è attualmente limitata alla banda iniziale 144–148 MHz; non si
 
 ## Build
 
-Eseguire: make clean all
+Eseguire: `make clean all check-image`
 
-Output: build/spectrum_k1_v3.bin, immagine ARM raw all'offset applicativo definito dal linker. Non è un contenitore DFU Quansheng e non deve essere rinominato come tale.
+Output: `build/uvk1_spectrum.bin`, immagine ARM raw all'offset applicativo definito dal linker. Il controllo automatico verifica stack pointer, reset vector e intervallo applicativo UV-K1. Non è un contenitore DFU Quansheng e non contiene un header proprietario inventato.
 
 ## Stato e sicurezza
 
