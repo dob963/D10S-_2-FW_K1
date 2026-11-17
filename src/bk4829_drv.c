@@ -34,7 +34,7 @@ void bk4829_init(void)
 {
     /* Sequenza di init pubblicata dal fork F4HWN per UV-K1:
      * App/driver/bk4829.c, funzione BK4819_Init(), commit
-     * 3261ca7883d5b0b60c0905d8766612dee7b4191d, righe 100-196.
+     * 3261ca7883d5b0b60c0905d8766612dee7b4191d, righe 100-201.
      *
      * Il nome BK4819_* è legacy: il file fisico e i pin appartengono
      * al target V3/K1. Non si importa la sequenza da bk4819.c V1/V2.
@@ -154,7 +154,9 @@ int bk4829_set_afc_enabled(int enabled)
     else
         value = (uint16_t)(value | 0x0010u);
     bk_spi_write(0x73u, value);
-    return 1;
+    uint16_t verify = bk_spi_read(0x73u);
+    if (verify == 0xFFFFu) return 0;
+    return ((verify & 0x0010u) == (value & 0x0010u)) ? 1 : 0;
 }
 
 int16_t bk4829_read_afc(void)
