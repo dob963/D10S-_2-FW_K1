@@ -1,112 +1,72 @@
 # Rapporto verifica build — UV-K1 V3 Spectrum
 
 Data: 2026-11-17  
-Repository: `dob963/D10S-_2-FW_K1`, branch `main`
+Repository: `dob963/D10S-_2-FW_K1`  
+Branch: `main`  
+Commit compilato: `f5918780ecf8648025378c7ea8ffca8728ab2757`
 
-## Stato build
+## Esito CI
 
-Ultima build ARM del codice renderer/RF completata con esito SUCCESS:
-- Run: https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44041340931
-- Commit compilato: `2fbe97b897b2b56057c369dba24dd44654c735ec`
-- Toolchain: `arm-none-eabi-gcc`, `-mcpu=cortex-m0plus -mthumb -mfloat-abi=soft`
-- Test host BK4829, DSP/no-cascade/waterfall e sweep: PASS
-- Dimensione artefatto verificata: raw BIN 6.688 byte; `.data` 4 byte + `.bss` 6.060 byte = 6.064 byte RAM. Mappa linker: `_ebss=0x200017B0`, limite stack `0x20003A00`, stack riservato 1.536 byte.
+<badge>SUCCESS</badge> GitHub Actions run #141:
+https://github.com/dob963/D10S-_2-FW_K1/actions/runs/44047292574
 
-Il commit `2fbe97b` includeva la rimozione del comando software ST7565 `0xE2`; la build ARM e i test host su quel commit sono terminati con esito SUCCESS. Il commit `7bea627` reintroduce la sequenza di reset software documentata dal driver UV-K1 upstream. La nuova modifica deve ancora passare una build ARM e i test CI.
+Tutti gli step sono terminati con esito SUCCESS:
+- test host BK4829, inclusa selezione LNA VHF/UHF;
+- test DSP no-cascade e isolamento Waterfall;
+- test sweep uniforme, copertura completa e mapping frequenza;
+- installazione toolchain ARM GCC;
+- compilazione ARM e generazione raw BIN;
+- pubblicazione artefatto.
 
-## Pinout documentato
+## Artefatti
 
-- RF: PB8=SCK, PB9=SDIO bidirezionale, PF9=SCN/CSN.
-- ST7565: PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS.
-- Fonte: driver target UV-K1 upstream `App/driver/bk4829.c`, `App/driver/st7565.c`, e audit `docs/UPSTREAM_PINOUT_VERIFICATION.md`.
-- I bus RF e LCD sono separati. La mappa fisica della singola revisione PCB richiede ancora verifica elettrica.
+Artefatto GitHub Actions: `uv-k1-v3-spectrum-build`  
+ID: `14312066975`  
+Dimensione archivio ZIP: 22.851 byte  
+Scadenza indicata da GitHub: 2027-02-15  
+SHA-256 BIN: `bf4fcd2adb922b3d799c4899aac682c06ae4cc2221381b73eb12673203d1a58e`
 
-## Driver BK4829
+Contenuti:
+- `spectrum_k1_v3.bin`: 6.168 byte
+- `spectrum_k1_v3.elf`: 85.020 byte
+- `spectrum_k1_v3.map`: 39.245 byte
 
-- Sequenza init basata sul file target UV-K1 `App/driver/bk4829.c`, commit upstream `3261ca7883d5b0b60c0905d8766612dee7b4191d`, funzione `BK4819_Init()`, righe 100–201.
-- REG 0x19 = 0x1041, fonte: stesso file, riga 186.
-- AFC disable: REG 0x73 bit 4; la sequenza scrive 0x4691, bit 4 impostato. `bk4829_read_afc()` restituisce 0 neutro; `bk4829_afc_is_valid()` restituisce 0. Il DSP non usa la misura AFC e la pipeline non abilita la tripla coerenza basata su AFC.
-- Il dump stock 7.03.01 verificato ha SHA-256 `55ec0daffc5668bdb41dcc118475d7e6e23ad953d70f57a9bca64a6202734ba0`. La ricerca byte-level non ha dimostrato autonomamente la scrittura REG 0x19; quel valore è documentato dal sorgente F4HWN, non spacciato per disassemblaggio stock.
-- Licenza upstream registrata: Apache-2.0; implementazione locale indipendente e inventario delle fonti in `docs/BK4829_REGISTER_EVIDENCE.md`.
+Il BIN è un'immagine ARM raw all'offset applicativo previsto dal linker. **Non è un contenitore DFU Quansheng** e non va rinominato come DFU.
 
-## Display e rendering
+## Memoria
 
-Implementati:
-- framebuffer ST7565 128x64, 1.024 byte, 8 pagine;
-- blit completo di 1.024 byte;
-- font 5x7 per frequenza, span e RBW;
-- barre spettro live e Peak Hold separato;
-- waterfall 16 righe con dithering Bayer 4x4;
-- frame pacing nominale di 67 ms (circa 15 fps), subordinato al clock reale.
+Dalla mappa linker:
+- FLASH vettori: 192 byte
+- `.text`: 5.604 byte
+- `.rodata`: 360 byte
+- `.data`: 4 byte
+- `.bss`: 4.880 byte
+- fine `.bss`: `0x20001314`
+- limite inferiore stack riservato: `0x20003A00`
+- stack riservato: 1.536 byte
 
-**Reset adottato:** il pin fisico RES non è identificato nelle fonti disponibili e il driver UV-K1 upstream dichiara che non esiste un reset hardware utilizzabile. Il progetto ora segue la sequenza upstream: display OFF, comando software `0xE2`, attesa 120 ms, quindi configurazione e accensione. Il pin RES non viene assegnato a un GPIO ipotetico. La verifica elettrica della revisione PCB resta aperta.
+La verifica ASSERT del linker per la separazione RAM/stack è passata.
 
-## Linker e memoria
+## Correzioni software incluse
 
-- FLASH applicazione: 0x08002800, limite prudenziale immagine 96 KiB.
-- RAM: 0x20000000, 16 KiB.
-- Stack riservato: 1.536 byte.
-- Offset 0x08002800 deriva dal linker upstream UV-K1; non dimostra che un raw BIN sia un pacchetto DFU valido.
+1. Sweep uniforme con un campione reale per ogni bin e inclusione esatta degli estremi banda.
+2. Rimossi i buchi creati dalla scansione adattiva che saltava bin o terminava prima della fine banda.
+3. Mediana calcolata su bin realmente adiacenti, senza compattare campioni distanti.
+4. Rimosso l'AGC software che modificava il guadagno a ogni campione e falsava i rapporti d'ampiezza tra frequenze.
+5. RSSI grezzo normalizzato a una scala grafica fissa 0..127; RBW non dichiarata quando non è calibrata.
+6. Selezione del percorso RF VHF/UHF via REG 0x33: GPIO4/VHF sotto 280 MHz e GPIO3/UHF da 280 MHz, preservando gli altri bit e bloccando la scrittura se REG 0x30 non è leggibile.
+7. Aggiunto inventario di provenienza/licenze in `docs/THIRD_PARTY.md`.
 
-## Limiti e sicurezza
+## Blocchi ancora aperti prima della prova radio
 
-- Nessuna prova elettrica, RF o display eseguita sulla radio fisica.
-- Clock core assunto 8 MHz per SysTick; da verificare sul target.
-- Keypad event scan ancora TODO.
-- Backup calibrazione/configurazione obbligatorio prima di qualsiasi flash.
-- Il raw BIN non va flashato direttamente né rinominato come DFU. Prima verificare formato immagine, bootloader, vettori e strumento DFU compatibile.
-- Non definire il firmware pronto all'uso finché RES, pinout della scheda, RF, bootloader e ripristino calibrazione non sono stati verificati su hardware.
+La build e i test host dimostrano la compilabilità e il comportamento dei moduli simulati, **non** il funzionamento sul dispositivo fisico.
 
+- Clock e tempi SysTick: 8 MHz resta un'assunzione; verificare handoff del bootloader 7.03.01.
+- Keypad: la matrice è documentata, ma la scansione eventi Spectrum non è ancora implementata.
+- AFC: misura/offset non validati; AFC-based spur rejection resta disabilitata.
+- ST7565: init e rendering compilano; manca la verifica elettrica/visiva sul pannello.
+- RF: la commutazione LNA segue il driver UV-K1 di riferimento, ma registri, tempi e sensibilità vanno verificati con radio e strumentazione.
+- Calibrazione: nessuna area flash viene modificata; backup e layout devono essere verificati prima del flash.
+- Packaging: raw BIN non equivale a DFU; occorre validare il flusso di flashing e il recovery per il target effettivo.
 
-## Ricerca schema elettrico / reset ST7565 — 2026-11-17
-
-Ricerca pubblica eseguita su GitHub e sul materiale di teardown Quansheng K1:
-- Repository teardown: https://github.com/armel/k1-teardown
-- Albero dei file: https://github.com/armel/k1-teardown/tree/main
-- Contiene README, datasheet BK4829/PY32F071, dump firmware e fotografie PCB `K1_VIEW_*.png`; non è presente uno schema elettrico completo o una netlist pubblicata.
-- Il README identifica K1 con PY32F071, 128 KiB Flash e 16 KiB SRAM.
-
-**Evidenza importante sul reset LCD:** nel sorgente target UV-K1 upstream
-`App/driver/st7565.c`, funzione `ST7565_Init()` e funzione
-`ST7565_HardwareReset()`, il commento dice esplicitamente che sul K1
-non esiste un pin hardware reset utilizzabile; `ST7565_HardwareReset()`
-è un no-op. La routine upstream invia poi il comando ST7565 software reset
-`0xE2`. File:
-https://github.com/armel/uv-k1-k5v3-firmware-custom/blob/main/App/driver/st7565.c
-
-Questo è un dato software del firmware di riferimento, non una misura
-elettrica e non dimostra se il pin RES del controller sia legato a VDD,
-a un reset comune o lasciato non connesso. Non è stata trovata evidenza
-sufficiente per assegnare RES a un GPIO PY32F071. **Non collegare né
-pilotare un GPIO ipotetico.**
-
-Il progetto locale adotta ora la sequenza software reset del driver upstream
-(`DISPLAY OFF`, `0xE2`, attesa 120 ms), senza copiare il codice sorgente.
-La routine è stata reimplementata nel driver locale. Questo allinea
-l'inizializzazione al comportamento usato dagli sviluppatori per UV-K1;
-la funzionalità effettiva del pannello resta comunque da verificare su
-radio fisica e la connessione elettrica del pin RES non è stata misurata.
-
-Per chiudere con evidenza: occorre ottenere lo schema di servizio dal
-produttore oppure ispezionare le fotografie teardown ad alta risoluzione
-e misurare la continuità tra RES del pannello, GPIO MCU, VDD e reset comune.
-
-
-## Adeguamento alla soluzione degli sviluppatori — 2026-11-17
-
-Commit locale: `7bea62778ca83861002eb4fc3127d41b4c0446fd`.
-
-Il driver `src/st7565.c` ora esegue:
-1. display OFF (`0xAE`);
-2. reset software ST7565 (`0xE2`);
-3. attesa 120 ms;
-4. configurazione del controller, alimentazione interna, pulizia RAM e display ON.
-
-Riferimento tecnico: `armel/uv-k1-k5v3-firmware-custom/App/driver/st7565.c`,
-funzioni `ST7565_Init()` e `ST7565_HardwareReset()`. Il riferimento è
-distribuito con licenza Apache-2.0; è stata adottata la sequenza funzionale
-con implementazione locale indipendente, senza importare il file upstream.
-La licenza e la fonte sono registrate qui per tracciabilità.
-
-**Stato:** modifica committata; build ARM e test automatici del nuovo commit
-ancora da eseguire. Nessuna prova display su radio fisica è stata eseguita.
+**Decisione:** build compilata e test automatici superati. Non dichiarare il firmware pronto per il flash finché i blocchi hardware/bootloader sopra elencati non sono chiusi.
