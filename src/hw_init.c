@@ -35,13 +35,13 @@
 
 /* 35 NOP per fase: timing del bus seriale UV-K1 upstream SHORT_DELAY(). */
 #define RF_SHORT_DELAY() __asm volatile (\
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n" \
-    "nop\\n nop\\n nop\\n nop\\n nop\\n")
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n" \
+    "nop\n nop\n nop\n nop\n nop\n")
 
 static void pin_mode(uint32_t base, uint32_t pin, uint32_t mode)
 {
