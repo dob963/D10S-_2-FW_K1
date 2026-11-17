@@ -114,14 +114,14 @@ void bk4829_set_freq(uint32_t freq_hz)
         scan_ctrl_valid = 1u;
     }
 
-    /* Selezione del ramo RF esterno: GPIO4 abilita VHF LNA (<280 MHz),
-     * GPIO3 abilita UHF LNA (>=280 MHz). Il BK4829 usa REG_33 con
+    /* Selezione del ramo RF esterno: GPIO4 abilita VHF LNA (<28 MHz),
+     * GPIO3 abilita UHF LNA (>=28 MHz). Il BK4829 usa REG_33 con
      * maschera 0x40>>GPIO_number; preserviamo tutti gli altri bit.
      * Riferimento comportamentale: driver UV-K1 bk4829.c, funzione
      * BK4819_PickRXFilterPathBasedOnFrequency (licenza Apache-2.0).
      */
     const uint16_t lna_mask = 0x000Cu; /* GPIO3=0x08, GPIO4=0x04 */
-    const uint16_t lna_value = (freq_hz < 280000000u) ? 0x0004u : 0x0008u;
+    const uint16_t lna_value = (freq_hz < 28000000u) ? 0x0004u : 0x0008u;
     const uint16_t next_gpio = (uint16_t)((rf_gpio_state & ~lna_mask) | lna_value);
     if (next_gpio != rf_gpio_state) {
         bk_spi_write(0x33u, next_gpio);
