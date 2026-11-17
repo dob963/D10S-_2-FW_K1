@@ -138,3 +138,8 @@ Queste sono correzioni della temporizzazione e della selezione del ramo RF basat
 Per la scansione il bit AF DAC (bit 9) viene disabilitato conservando il resto del valore: REG 0x30 = `0xBDF1`. I test host verificano la sequenza e il valore ripristinato al retune.
 
 La sequenza è una reimplementazione dei valori pubblicati nel driver UV-K1 (Apache-2.0, attribuzione sopra); non è una prova del ricevitore sul chip fisico. La larghezza filtro RX e l'intero percorso RF devono ancora essere verificati con il dump stock e strumentazione.
+
+
+## Filtro di scansione
+
+Il driver UV-K1 upstream documenta REG 0x43 per la larghezza del filtro RF. Per la modalità wide 25 kHz la configurazione è `0x3028` (RF passband 7 kHz secondo la descrizione dei bit e modo 25k/20k). Il firmware standalone scrive esplicitamente questo valore dopo l'accensione RX, evitando di dipendere dal filtro lasciato dal bootloader o da un precedente VFO. Il test host verifica la scrittura. La larghezza effettiva e la sensibilità vanno comunque misurate sul ricevitore reale.
