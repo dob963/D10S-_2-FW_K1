@@ -3,9 +3,9 @@
 Data verifica: 2026-11-17  
 Repository: `dob963/D10S-_2-FW_K1`  
 Branch: `main`  
-Ultima build ARM completata: [43985162875](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985162875)  
-Commit build: `53554edf890cadd70cdf83a14c756dc2186073c8`  
-La build include anche il test host che verifica il bypass di letture RF quando REG_30 è invalido.
+Ultima build ARM completata: [43985515540](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985515540)  
+Commit del rapporto: `956da5bf2c9cf55c1a6f9df81b012344b9272465`  
+La build include i test host BK4829, DSP/Waterfall e mappatura sweep adattivo.
 
 ## Esito compilazione e test
 
@@ -37,8 +37,8 @@ Metriche riportate dal linker:
 
 Artefatto GitHub Actions:
 - Nome: `uv-k1-v3-spectrum-build`
-- ID: `14285780290`
-- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985162875/artifacts/14285780290)
+- ID: `14284523376`
+- [Artefatto della build](https://github.com/dob963/D10S-_2-FW_K1/actions/runs/43985515540/artifacts/14284523376)
 
 ## Warning
 
@@ -81,4 +81,4 @@ La build e i test host provano la compilabilità e il comportamento software iso
 
 ## Regola di rilascio
 
-Il BIN da 5.636 byte è un artefatto di compilazione sperimentale e NON deve essere flashato sulla radio. Nessun file sarà etichettato come flashabile finché tutti i gate hardware, RF, display e bootloader non saranno superati.
+Il BIN raw da 6.488 byte è un artefatto di compilazione sperimentale e NON deve essere flashato sulla radio. Nessun file sarà etichettato come flashabile finché tutti i gate hardware, RF, display e bootloader non saranno superati.
