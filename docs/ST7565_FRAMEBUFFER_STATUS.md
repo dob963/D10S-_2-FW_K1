@@ -36,3 +36,9 @@ Il display riceve un frame completo di 1.024 byte per iterazione. Il main inseri
 ## Scala e fedeltà live
 
 L'adattatore DSP esistente consegna alla UI campioni 0..127 per rispettare l'API int8_t di reiezione spurie. La UI scala 0..127 sull'intera altezza grafica e sul Waterfall a 16 livelli. Il disegno non miscela sweep successivi e Peak Hold resta separato dalla traccia live. Non sono stati modificati i moduli DSP forniti.
+
+## Verifica aggiuntiva RES — 2026-11-17
+
+Il driver upstream UV-K1 consultato a commit `3261ca7883d5b0b60c0905d8766612dee7b4191d`, file `App/driver/st7565.c`, dichiara esplicitamente che sul K1 non è disponibile un reset hardware utilizzabile e che `ST7565_HardwareReset()` è un no-op. Lo stesso driver esegue il comando software ST7565 `0xE2` dopo DISPLAY OFF e attende 120 ms.
+
+Questo contraddice il requisito iniziale di pilotare RES da un GPIO. Non è stata trovata una prova che identifichi un GPIO RES sulla revisione UV-K1 in uso. Il progetto locale non deve inventare un pin e, al momento, non invia neppure `0xE2`: di conseguenza l'inizializzazione ST7565 non è garantita. Per chiudere il punto serve lo schema elettrico/revisione PCB o una misura di continuità; se la scheda conferma che RES non è accessibile, la scelta tecnica documentata è il reset software `0xE2` secondo il driver upstream, non un GPIO ipotetico.
