@@ -23,9 +23,7 @@
 #define LCD_MOSI_PIN 7u
 #define LCD_CS_PIN 2u
 
-#ifndef HW_CORE_CLOCK_HZ
-#define HW_CORE_CLOCK_HZ 8000000u
-#endif
+extern uint32_t SystemCoreClock;
 #define SYST_CSR REG32(0xE000E010u)
 #define SYST_RVR REG32(0xE000E014u)
 #define SYST_CVR REG32(0xE000E018u)
@@ -100,7 +98,7 @@ static uint32_t rf_read_bit(void)
 
 void delay_us(uint32_t us)
 {
-    const uint32_t ticks_per_us = HW_CORE_CLOCK_HZ / 1000000u;
+    const uint32_t ticks_per_us = SystemCoreClock / 1000000u;
     if (ticks_per_us == 0u || ticks_per_us > 0x01000000u) return;
     SYST_CSR = 0u;
     SYST_RVR = ticks_per_us - 1u;
@@ -114,7 +112,7 @@ void delay_us(uint32_t us)
 
 void delay_ms(uint32_t ms)
 {
-    const uint32_t ticks_per_ms = HW_CORE_CLOCK_HZ / 1000u;
+    const uint32_t ticks_per_ms = SystemCoreClock / 1000u;
     if (ticks_per_ms == 0u || ticks_per_ms > 0x01000000u) return;
     SYST_CSR = 0u;
     SYST_RVR = ticks_per_ms - 1u;
