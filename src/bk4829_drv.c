@@ -80,6 +80,7 @@ void bk4829_set_freq(uint32_t freq_hz)
 
 void bk4829_wait_settle(void)
 {
+    if (!scan_ctrl_valid) return;
     /* Fonte K1 Spectrum3D, App/apps/spectrum3d/spectrum3d_app.c:
      * attende REG_63 (low byte) < 200, massimo 50 letture, poi scarta
      * una lettura REG_67 perché può riferirsi alla frequenza precedente.
@@ -94,6 +95,7 @@ void bk4829_wait_settle(void)
 
 int16_t bk4829_read_rssi(void)
 {
+    if (!scan_ctrl_valid) return 0;
     /* Fonte K1 App/driver/bk4829.c, righe 1550-1553:
      * return ReadRegister(REG_67) & 0x01FF.
      * Restituisce RSSI grezzo 9 bit, non dBm.
