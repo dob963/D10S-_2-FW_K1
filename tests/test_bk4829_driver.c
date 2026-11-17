@@ -14,11 +14,13 @@ static unsigned glitch_count;
 static uint16_t glitch_values[8];
 static unsigned glitch_reads;
 static unsigned rssi_reads;
+static int fail_ctrl_read;
 static uint32_t ms_total;
 static uint32_t us_total;
 
 uint16_t bk_spi_read(uint8_t reg)
 {
+    if (reg == 0x30u && fail_ctrl_read) return 0xFFFFu;
     if (reg == 0x63u) {
         ++glitch_reads;
         if (glitch_index < glitch_count) return glitch_values[glitch_index++];
@@ -111,7 +113,7 @@ int main(void)
 
     /* Se REG_30 non è leggibile, init documentata avviene ma il retune è bloccato. */
     reset_logs();
-    regs[0x30] = 0xFFFFu;
+    fail_ctrl_read = 1;
     bk4829_init();
     assert(write_count == 54u);
     reset_logs();
@@ -121,6 +123,7 @@ int main(void)
     assert(write_count == 0u);
     assert(glitch_reads == 0u);
     assert(rssi_reads == 0u);
+    fail_ctrl_read = 0;
 
     /* Frequenze fuori dalle bande dichiarate dal datasheet: nessuna scrittura. */
     reset_logs();
