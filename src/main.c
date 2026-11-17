@@ -12,6 +12,7 @@
 
 static int16_t spec_raw[SPEC_BINS], spec_avg[SPEC_BINS];
 static int16_t spec_med_in[SPEC_BINS], afc_raw[SPEC_BINS];
+static uint8_t spec_valid[SPEC_BINS], spec_med_bins[SPEC_BINS];
 static int8_t spec_clean[SPEC_BINS], spec_stable[SPEC_BINS];
 static agc_t agc;
 static spur_t spur;
@@ -34,28 +35,40 @@ int main(void)
     for (int i = 0; i < SPEC_BINS; ++i) spec_avg[i] = 0;
 
     for (;;) {
-        sweep_adaptive(f_start, f_stop, spec_raw, afc_raw);
+        sweep_adaptive(f_start, f_stop, spec_raw, afc_raw, spec_valid);
         /* Traccia live: copia diretta dello sweep corrente.
          * sweep_average() non viene usata qui: introdurrebbe cross-fade.
          */
         for (int i = 0; i < SPEC_BINS; ++i)
             spec_avg[i] = spec_raw[i];
 
-        /* Snapshot: la mediana legge sempre i campioni dello stesso sweep.
-         * Evita che i risultati gia' filtrati contaminino i vicini successivi.
-         * median3() resta invariata.
+        /* Median 3-tap sui soli campioni validi, in ordine di frequenza.
+         * Lo snapshot compatto evita cascata in-place e non tratta i buchi
+         * dello sweep coarse come misure RSSI pari a zero.
          */
-        for (int i = 0; i < SPEC_BINS; ++i)
-            spec_med_in[i] = spec_avg[i];
-        for (int i = 1; i < SPEC_BINS - 1; ++i)
-            spec_avg[i] = median3(spec_med_in[i - 1],
-                                  spec_med_in[i],
-                                  spec_med_in[i + 1]);
+        int valid_count = 0;
+        for (int i = 0; i < SPEC_BINS; ++i) {
+            if (spec_valid[i]) {
+                spec_med_in[valid_count] = spec_avg[i];
+                spec_med_bins[valid_count] = (uint8_t)i;
+                ++valid_count;
+            }
+        }
+        for (int i = 1; i < valid_count - 1; ++i) {
+            uint8_t bin = spec_med_bins[i];
+            spec_avg[bin] = median3(spec_med_in[i - 1],
+                                    spec_med_in[i],
+                                    spec_med_in[i + 1]);
+        }
 
-        for (int i = 0; i < SPEC_BINS; ++i)
-            spec_avg[i] = agc_process(&agc, spec_avg[i]);
-        for (int i = 0; i < SPEC_BINS; ++i)
-            spec_avg[i] = calib_apply_dc(spec_avg[i], i);
+        for (int i = 0; i < SPEC_BINS; ++i) {
+            if (spec_valid[i]) {
+                spec_avg[i] = agc_process(&agc, spec_avg[i]);
+                spec_avg[i] = calib_apply_dc(spec_avg[i], i);
+            } else {
+                spec_avg[i] = 0;
+            }
+        }
 
         /* Contratto numerico dell'uscita DSP/display: 0..127.
          * spur_update() mantiene la sua API int8_t originale. Saturiamo
@@ -64,16 +77,21 @@ int main(void)
          * Il valore AGC interno resta 0..255 fino a questo punto.
          */
         for (int i = 0; i < SPEC_BINS; ++i) {
+            if (!spec_valid[i]) {
+                spec_avg[i] = 0;
+                spec_clean[i] = 0;
+                continue;
+            }
             if (spec_avg[i] < 0) spec_avg[i] = 0;
             if (spec_avg[i] > 127) spec_avg[i] = 127;
         }
-        if (bk4829_afc_is_valid()) {
-            /* Tripla coerenza soltanto con misura AFC realmente validata. */
+        if (bk4829_afc_is_valid() && valid_count == SPEC_BINS) {
+            /* Tripla coerenza soltanto con AFC validato e sweep completo. */
             spur_update(&spur, spec_avg, afc_raw, spec_clean);
         } else {
-            /* Non simulare AFC stabile con un valore costante zero. */
+            /* Nessuna falsa coerenza: copia solo i bin realmente misurati. */
             for (int i = 0; i < SPEC_BINS; ++i)
-                spec_clean[i] = (int8_t)spec_avg[i];
+                spec_clean[i] = spec_valid[i] ? (int8_t)spec_avg[i] : 0;
         }
         stabilizer_apply(&stab, spec_clean, spec_stable, SPEC_BINS);
 
@@ -81,7 +99,7 @@ int main(void)
          * Il renderer live non applica cross-fade o clamp gradiente.
          */
         ui_spectrum_draw(spec_stable, SPEC_BINS);
-        waterfall_push(spec_stable, SPEC_BINS);
+        waterfall_push(spec_clean, SPEC_BINS);
         st7565_blit_full();
         /* Pausa minima tra frame: limita il refresh a circa 10-15 fps
          * con il clock core di riferimento 8 MHz configurato in hw_init. */
