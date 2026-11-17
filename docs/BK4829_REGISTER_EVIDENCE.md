@@ -124,3 +124,17 @@ Il confronto del bus seriale con `BK4819_ReadU16()`, `BK4819_WriteU8()`, `BK4819
 - sequenza CS/SCL di inizio e fine transazione e ripristino SDA/SCL.
 
 Queste sono correzioni della temporizzazione e della selezione del ramo RF basate sul driver di riferimento; non certificano il marking del chip, la compatibilità elettrica o il funzionamento sul PCB specifico.
+
+
+## Avvio ricevitore — correzione debug 2026-11-17
+
+È stato individuato un problema funzionale più grave: il firmware inizializzava i registri base ma si limitava poi a leggere REG 0x30. Non poteva assumere che il bootloader avesse lasciato il ricetrasmettitore in ricezione.
+
+È stata aggiunta la sequenza di accensione RX documentata nella funzione `BK4819_RX_TurnOn()` del driver UV-K1 upstream:
+- REG 0x37 = `0x9F1F`
+- REG 0x30 = `0x0000`
+- REG 0x30 = `0xBFF1`
+
+Per la scansione il bit AF DAC (bit 9) viene disabilitato conservando il resto del valore: REG 0x30 = `0xBDF1`. I test host verificano la sequenza e il valore ripristinato al retune.
+
+La sequenza è una reimplementazione dei valori pubblicati nel driver UV-K1 (Apache-2.0, attribuzione sopra); non è una prova del ricevitore sul chip fisico. La larghezza filtro RX e l'intero percorso RF devono ancora essere verificati con il dump stock e strumentazione.
