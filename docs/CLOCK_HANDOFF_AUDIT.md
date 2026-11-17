@@ -27,6 +27,12 @@ Il file ufficiale documenta:
 
 Il riferimento è distribuito sotto BSD-3-Clause (avvisi Puya e ST). È stato consultato per l'audit; non è stato copiato codice nel firmware.
 
+## Correzione applicata dopo l'audit
+
+Il commit `b53a706b78514d7f74ec8d082b109793115219be` aggiorna `src/system_init.c`: all'avvio l'applicazione imposta `SCB->VTOR` a `0x08002800` e applica DSB/ISB prima di proseguire. La modifica non riconfigura clock o PLL e non cambia la logica DSP.
+
+Resta da verificare sul dispositivo che il bootloader 7.03.01 entri effettivamente nel reset handler dell'immagine e che il vettore sia accettato dal formato di caricamento usato.
+
 ## Esito
 
 **Clock non certificato.** Il fatto che il riferimento Puya usi HSI nominale da 8 MHz non dimostra che il bootloader Quansheng 7.03.01 consegni il controllo all'applicazione con HSI/HSIDIV/AHB nelle stesse condizioni. Pertanto la costante fissa da 8 MHz non può essere considerata una misura verificata.
