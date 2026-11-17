@@ -1,7 +1,7 @@
 #include "agc_sw.h"
 void agc_init(agc_t *a) {
     a->gain_q8=256; a->attack_q8=384; a->decay_q8=12;
-    a->target_q8=180*256; a->min_q8=32*256; a->max_q8=1024*256;
+    a->target_q8=96*256; a->min_q8=32*256; a->max_q8=1024*256;
     a->noise_floor_q8=40*256;
 }
 int16_t agc_process(agc_t *a, int16_t rssi_raw) {
