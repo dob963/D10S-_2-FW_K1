@@ -82,8 +82,18 @@ void bk4829_init(void)
     rf_gpio_state = 0x9000u;
     bk_spi_write(0x33u, rf_gpio_state);
 
-    /* REG_30 è configurato a runtime dal firmware UV-K1. Non inventare
-     * un valore iniziale: leggere quello presente dopo la sequenza init. */
+    /* Avvio esplicito del ricevitore: il bootloader DFU non garantisce
+     * che il BK sia già in RX. Sequenza documentata da
+     * BK4819_RX_TurnOn() nel driver UV-K1 upstream: REG37=9F1F,
+     * REG30=0, quindi REG30=BFF1. La scansione disabilita AF DAC (bit 9)
+     * ma mantiene attivi RX DSP, PLL/VCO e collegamento RX.
+     */
+    bk_spi_write(0x37u, 0x9F1Fu);
+    bk_spi_write(BK_REG_CTRL, 0u);
+    bk_spi_write(BK_REG_CTRL, 0xBFF1u);
+
+    /* Conserva la configurazione RX e disabilita solo l'AF DAC durante
+     * la scansione, come fa Spectrum3D nel firmware UV-K1 upstream. */
     uint16_t raw_ctrl = bk_spi_read(BK_REG_CTRL);
     if (raw_ctrl != 0xFFFFu) {
         scan_ctrl = (uint16_t)(raw_ctrl & (uint16_t)~BK_CTRL_AF_DAC);
