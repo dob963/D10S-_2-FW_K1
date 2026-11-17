@@ -2,12 +2,14 @@
 #include "bk4829_drv.h"
 
 void sweep_adaptive(uint32_t f_start, uint32_t f_stop,
-                    int16_t *spectrum_out, int16_t *afc_out)
+                    int16_t *spectrum_out, int16_t *afc_out,
+                    uint8_t *valid_out)
 {
-    if (!spectrum_out || !afc_out) return;
+    if (!spectrum_out || !afc_out || !valid_out) return;
     for (int i = 0; i < SPEC_BINS; ++i) {
         spectrum_out[i] = 0;
         afc_out[i] = 0;
+        valid_out[i] = 0u;
     }
     if (f_stop <= f_start) return;
 
@@ -25,15 +27,15 @@ void sweep_adaptive(uint32_t f_start, uint32_t f_stop,
         int16_t rssi = bk4829_read_rssi();
         int16_t afc = bk4829_read_afc();
 
-        /* Mappa ogni misura sul bin della sua frequenza reale.
-         * Lo sweep coarse lascia bin non campionati a zero: non spostare
-         * i campioni all'inizio dell'array, altrimenti il grafico falsifica
-         * l'asse X e concentra lo spettro nel primo quarto del display.
+        /* Mappa la misura nel bin della frequenza realmente campionata.
+         * In modalità coarse restano buchi espliciti: non comprimere i
+         * campioni nei primi 32 indici e non interpolare picchi non misurati.
          */
         uint32_t bin = (uint32_t)(((uint64_t)(f - f_start) * SPEC_BINS) / span);
         if (bin >= SPEC_BINS) bin = SPEC_BINS - 1u;
         spectrum_out[bin] = rssi;
         afc_out[bin] = afc;
+        valid_out[bin] = 1u;
         ++samples;
 
         uint32_t step = (rssi < 60) ? step_coarse : step_fine;
