@@ -8,7 +8,8 @@
 #define ST7565_FB_SIZE 1024
 
 /* Framebuffer 128x64 e trasporto bit-bang ST7565 dedicato.
- * Il reset software e' usato; nessun reset hardware viene pilotato.
+ * Reset hardware RES: TODO finche' il pin non e' verificato sullo schema.
+ * Non viene inviato il comando software E2.
  */
 void st7565_init(void);
 void st7565_clear(void);
