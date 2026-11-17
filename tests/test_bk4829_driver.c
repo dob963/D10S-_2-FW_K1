@@ -113,6 +113,7 @@ int main(void)
     reset_logs();
     regs[0x30] = 0x1234u;
     bk4829_init();
+    reset_logs();
     bk4829_set_freq(650000000u);
     assert(write_count == 0u);
 
