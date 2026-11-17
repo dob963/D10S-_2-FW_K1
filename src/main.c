@@ -35,7 +35,11 @@ int main(void)
 
     for (;;) {
         sweep_adaptive(f_start, f_stop, spec_raw, afc_raw);
-        sweep_average(spec_raw, spec_avg, SPEC_BINS, 128);
+        /* Traccia live: copia diretta dello sweep corrente.
+         * sweep_average() non viene usata qui: introdurrebbe cross-fade.
+         */
+        for (int i = 0; i < SPEC_BINS; ++i)
+            spec_avg[i] = spec_raw[i];
 
         /* Snapshot: la mediana legge sempre i campioni dello stesso sweep.
          * Evita che i risultati gia' filtrati contaminino i vicini successivi.
@@ -63,7 +67,14 @@ int main(void)
             if (spec_avg[i] < 0) spec_avg[i] = 0;
             if (spec_avg[i] > 127) spec_avg[i] = 127;
         }
-        spur_update(&spur, spec_avg, afc_raw, spec_clean);
+        if (bk4829_afc_is_valid()) {
+            /* Tripla coerenza soltanto con misura AFC realmente validata. */
+            spur_update(&spur, spec_avg, afc_raw, spec_clean);
+        } else {
+            /* Non simulare AFC stabile con un valore costante zero. */
+            for (int i = 0; i < SPEC_BINS; ++i)
+                spec_clean[i] = (int8_t)spec_avg[i];
+        }
         stabilizer_apply(&stab, spec_clean, spec_stable, SPEC_BINS);
 
         /* Live, Peak Hold e Waterfall restano percorsi distinti.
