@@ -75,11 +75,15 @@ static void rf_send_bit(uint32_t bit)
 static uint32_t rf_read_bit(void)
 {
     uint32_t bit;
+    /* Il BK4829 campiona SDA nella fase SCL bassa, prima del fronte
+     * di salita; leggere dopo il fronte di discesa sposta il bit.
+     * Sequenza allineata al driver UV-K1 upstream ReadU16(). */
+    bit = pin_read(GPIOB_BASE, RF_SDIO_PIN);
+    __asm volatile ("nop");
     pin_write(GPIOB_BASE, RF_SCK_PIN, 1u);
     __asm volatile ("nop");
     pin_write(GPIOB_BASE, RF_SCK_PIN, 0u);
     __asm volatile ("nop");
-    bit = pin_read(GPIOB_BASE, RF_SDIO_PIN);
     return bit;
 }
 
