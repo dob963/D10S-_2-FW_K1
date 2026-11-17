@@ -8,6 +8,7 @@ Repository: `dob963/D10S-_2-FW_K1`, branch `main`
 - Il linker colloca la tabella vettori a `0x08002800`.
 - Lo startup chiama `SystemInit()` prima di inizializzare .data/.bss e prima di main.
 - `SystemInit()` imposta `SCB->VTOR = 0x08002800`, coerentemente con il template Puya per il target K1.
+- `SystemCoreClockUpdate()` viene chiamata all'inizio di `hw_init()`, dopo che Reset_Handler ha completato copia .data e azzeramento .bss. Non viene chiamata prima della copia .data, perché la variabile globale sarebbe sovrascritta dal runtime C.
 - Non viene più forzato HSI a 8 MHz: il clock lasciato dal bootloader viene preservato.
 - `SystemCoreClockUpdate()` decodifica SWS, HSI_FS, HSIDIV, PLL source/multiplier e AHB prescaler dai registri RCC PY32F071.
 - `delay_us()` e `delay_ms()` usano il valore HCLK decodificato, non una costante fissa da 8 MHz.
