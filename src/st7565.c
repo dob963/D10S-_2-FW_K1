@@ -1,10 +1,12 @@
 #include "st7565.h"
 #include <stdint.h>
 
-/* Bus display dedicato: PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS.
- * Il bus RF resta su PB8/PB9/PF9 (hw_init.c): i pin non coincidono.
- * RESET hardware del modulo LCD non identificato: usare il reset software
- * ST7565 E2; verificare il reset fisico sullo schema/PCB prima del test.
+/* Bus display dedicato verificato sul driver UV-K1 upstream:
+ * PA5=SCK, PA7=MOSI, PA6=A0, PB2=CS. RF: PB8/PB9/PF9.
+ * TODO hardware: il pin RES del pannello non e' mappato dalle fonti
+ * verificate. Non sostituirlo con il comando software E2: il datasheet
+ * richiede il reset tramite RES. Identificare RES su schema/PCB prima
+ * di dichiarare completa l'inizializzazione o provare il display.
  */
 #define REG32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define LCD_SCK 5u
@@ -80,17 +82,18 @@ static const uint8_t font_alpha[26][5] = {
 void st7565_init(void)
 {
     st7565_clear();
-    /* Sequenza standard ST7565: reset software, display off, bias,
-     * ADC/COM scan, power control, rapporto resistivo e contrasto.
-     * Bias, orientamento e contrasto sono valori iniziali da verificare
-     * sul pannello reale; non sono registri BK4829.
+    /* Sequenza ST7565 dopo reset hardware RES.
+     * TODO: RES non e' pilotato perche' il suo pin non e' documentato
+     * nei sorgenti hardware consultati. Attendere la stabilizzazione
+     * all'accensione non equivale a un impulso RES e non garantisce il
+     * reset del controller. Nessun comando E2 viene inviato: il datasheet
+     * richiede il pin RES per il reset di inizializzazione.
      */
     lcd_pin(0x50000418u, LCD_CS, 1);
     lcd_pin(0x50000018u, LCD_SCK, 1); /* clock idle alto: SPI mode 3 */
     lcd_pin(0x50000018u, LCD_A0, 0);
-    lcd_command(0xAEu); /* display OFF prima del reset software */
-    lcd_command(0xE2u); /* reset software; K1 non espone reset hardware LCD */
     delay_ms(120u);
+    lcd_command(0xAEu); /* display OFF dopo la finestra di power-on */
 
     /* Parametri derivati dal driver K1 ST7565 upstream:
      * App/driver/st7565.c: bias 1/9, COM normale, SEG invertito,
