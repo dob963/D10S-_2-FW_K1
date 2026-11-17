@@ -18,7 +18,6 @@
 static int8_t peak[SPEC_BINS];
 static uint32_t center_hz;
 static uint32_t span_hz;
-static uint32_t rbw_hz;
 static uint8_t peak_hold = 1u;
 static int pending_event;
 static int stable_key;
@@ -115,12 +114,12 @@ void ui_spectrum_init(void)
 {
     for (int i=0;i<SPEC_BINS;++i) peak[i]=0;
     center_hz=146000000u; span_index=3u; span_hz=spans[span_index];
-    rbw_hz=0u; peak_hold=1u; pending_event=0;
+    peak_hold=1u; pending_event=0;
     stable_key=reported_key=KEY_INVALID; stable_count=0u;
 }
 void ui_spectrum_set_info(uint32_t center,uint32_t span,uint32_t rbw)
 {
-    center_hz=center; span_hz=span; rbw_hz=rbw; clamp_center_to_span();
+    center_hz=center; span_hz=span; (void)rbw; clamp_center_to_span();
 }
 void ui_spectrum_set_detection(uint32_t frequency,uint8_t level,uint8_t noise_floor)
 {
@@ -156,16 +155,11 @@ void ui_spectrum_draw(const int8_t *spec,int n)
     line[9]=' '; line[10]='S'; line[11]=' ';
     for(int i=0;i<7;++i) line[12+i]=s[i];
     line[19]='\0'; st7565_draw_text(0,0,line);
-    uint32_t rbw_k=rbw_hz/1000u; if(rbw_k>999u) rbw_k=999u;
-    char rbwline[12]={'R','B','W',' ',0,0,0,'K','H','z',0,0};
-    if(!rbw_hz) {rbwline[4]='-';rbwline[5]='-';rbwline[6]='-';}
-    else put3(rbwline+4,rbw_k);
-    st7565_draw_text(0,8,rbwline);
     char detline[24]={'N','F',' ',0,0,0,' ','P','K',' ',0,0,0,'.',0,0,0,0,0,0,0,0,0};
     put3(detline+3,detected_noise);
     if(detected_frequency){uint32_t mhz=detected_frequency/1000000u,frac=(detected_frequency%1000000u)/1000u;put3(detline+10,mhz);put3(detline+14,frac);}
     else{detline[10]='-';detline[11]='-';detline[12]='-';detline[14]='-';detline[15]='-';detline[16]='-';}
-    (void)detected_level; st7565_draw_text(0,16,detline);
+    (void)detected_level; st7565_draw_text(0,8,detline);
     for(int i=0;i<n;++i) {
         int live=spec[i]<0?0:spec[i]; if(live>127) live=127;
         if(peak_hold) {
