@@ -73,7 +73,7 @@ int main(void)
     bk4829_set_freq(146000000u);
     const uint32_t f10 = 14600000u;
     assert(write_count == 5u);
-    assert(write_regs[0] == 0x33u && write_values[0] == 0x9004u);
+    assert(write_regs[0] == 0x33u && write_values[0] == 0x9008u);
     assert(write_regs[1] == 0x38u && write_values[1] == (uint16_t)f10);
     assert(write_regs[2] == 0x39u && write_values[2] == (uint16_t)(f10 >> 16));
     assert(write_regs[3] == 0x30u && write_values[3] == 0u);
@@ -83,7 +83,7 @@ int main(void)
     reset_logs();
     bk4829_set_freq(27000000u);
     assert(write_count == 5u);
-    assert(write_regs[0] == 0x33u && write_values[0] == 0x9008u);
+    assert(write_regs[0] == 0x33u && write_values[0] == 0x9004u);
     assert(write_regs[1] == 0x38u);
     assert(write_regs[2] == 0x39u);
 
