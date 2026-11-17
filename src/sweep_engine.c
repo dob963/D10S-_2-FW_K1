@@ -31,7 +31,7 @@ void sweep_adaptive(uint32_t f_start, uint32_t f_stop,
          * In modalità coarse restano buchi espliciti: non comprimere i
          * campioni nei primi 32 indici e non interpolare picchi non misurati.
          */
-        uint32_t bin = (uint32_t)(((uint64_t)(f - f_start) * SPEC_BINS) / span);
+        uint32_t bin = (uint32_t)((((uint64_t)(f - f_start) * SPEC_BINS) + (span / 2u)) / span);
         if (bin >= SPEC_BINS) bin = SPEC_BINS - 1u;
         spectrum_out[bin] = rssi;
         afc_out[bin] = afc;
