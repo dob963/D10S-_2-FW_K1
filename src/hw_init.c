@@ -24,6 +24,7 @@
 #define LCD_CS_PIN 2u
 
 extern uint32_t SystemCoreClock;
+extern void SystemCoreClockUpdate(void);
 #define SYST_CSR REG32(0xE000E010u)
 #define SYST_RVR REG32(0xE000E014u)
 #define SYST_CVR REG32(0xE000E018u)
@@ -180,6 +181,9 @@ static void keypad_drive_columns(uint8_t low_column)
 
 void hw_init(void)
 {
+    /* Reset_Handler calls SystemInit before .data copy; refresh HCLK only
+     * now, after C runtime initialization, so the global is not overwritten. */
+    SystemCoreClockUpdate();
     RCC_IOPENR |= (1u << 0) | (1u << 1) | (1u << 5);
 
     pin_mode(GPIOB_BASE, RF_SCK_PIN, 1u);
