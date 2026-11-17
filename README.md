@@ -14,6 +14,9 @@ Firmware sperimentale di analizzatore Spectrum autonomo per:
 - Noise floor percentile 20%.
 - Conferma picchi su due sweep consecutivi e interpolazione parabolica sub-bin.
 - Peak hold e indicazione frequenza del picco.
+- Avvio esplicito RX del BK e filtro RF wide 25 kHz.
+- Backlight PF8 attivata dopo l'inizializzazione ST7565.
+- HSI forzato a 8 MHz e VTOR spostato all'offset applicativo `0x08002800`.
 - Matrice keypad UV-K1 con debounce e controlli Spectrum.
 
 ## Controlli
@@ -35,7 +38,7 @@ Output: build/spectrum_k1_v3.bin, immagine ARM raw all'offset applicativo defini
 
 ## Stato e sicurezza
 
-I test host e la build CI verificano compilazione, mapping sweep, driver simulato e DSP. Non sostituiscono la prova sulla radio reale. Clock/handoff, RF, display, keypad, calibrazione e procedura DFU/recovery restano soggetti a verifica fisica e backup completo.
+I test host e la build CI verificano compilazione, mapping sweep, driver simulato e DSP. Non sostituiscono la prova sulla radio reale. Il clock e la tabella vettori sono inizializzati dal firmware secondo i registri Puya; l'effettivo handoff dal bootloader, RF, display, keypad, calibrazione e procedura DFU/recovery restano soggetti a verifica fisica e backup completo.
 
 **Non flashare il BIN raw finché bootloader, formato e percorso di recupero non sono stati verificati sul dispositivo esatto.** Non scrivere nelle aree di calibrazione o riservate.
 
